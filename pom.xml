@@ -32,6 +32,7 @@
         <springdoc.version>2.8.17</springdoc.version>
         <logstash-logback.version>8.1</logstash-logback.version>
         <jacoco.version>0.8.12</jacoco.version>
+        <mapstruct.version>1.6.3</mapstruct.version>
         <!--
         commons-lang3: org.springdoc → swagger-core-jakarta経由で使用
         脆弱性のある3.17.0をオーバーライドするため、明示的に指定が必要-->
@@ -64,6 +65,12 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
+        </dependency>
+        <!-- MapStruct -->
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+            <version>${mapstruct.version}</version>
         </dependency>
         <!-- JWT -->
         <dependency>
@@ -104,6 +111,17 @@
             <artifactId>spring-boot-starter-aop</artifactId>
         </dependency>
 
+        <!-- byte-buddy-agent: Mockito の動的エージェントロード警告抑制のため、ローカルリポジトリへのキャッシュを保証 -->
+        <dependency>
+            <groupId>net.bytebuddy</groupId>
+            <artifactId>byte-buddy-agent</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
@@ -136,6 +154,20 @@
                 </executions>
             </plugin>
 
+            <!-- Surefire: byte-buddy-agent を事前アタッチして Mockito の動的エージェントロード警告を抑制 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <!-- @{argLine}: JaCoCo の prepare-agengit t が設定する argLine を遅延バインディングで継承 -->
+                    <!-- byte-buddy バージョンは Spring Boot BOM が管理する ${byte-buddy.version} を使用 -->
+                    <argLine>
+                        @{argLine}
+                        -javaagent:${settings.localRepository}/net/bytebuddy/byte-buddy-agent/${byte-buddy.version}/byte-buddy-agent-${byte-buddy.version}.jar
+                    </argLine>
+                </configuration>
+            </plugin>
+
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
@@ -157,6 +189,12 @@
                         <path>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
+                        </path>
+                        <!-- Lombok より後に指定すること（Lombok が生成した setter/builder を MapStruct が参照するため） -->
+                        <path>
+                            <groupId>org.mapstruct</groupId>
+                            <artifactId>mapstruct-processor</artifactId>
+                            <version>${mapstruct.version}</version>
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
