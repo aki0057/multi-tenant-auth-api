@@ -4,34 +4,34 @@
 
 ```
 src/main/java/.../
-├── presentation/          ← Controller, Request/Response DTO, GlobalExceptionHandler
+├── presentation/          ← Controller, Request/Response DTO
+│   ├── advice/            ← 例外ハンドラー
+│   └── filter/            ← JWT フィルター
 ├── application/           ← UseCase サービス, Command オブジェクト
 ├── domain/
-│   ├── model/             ← ドメインモデル（record）, Value Object（vo/）
-│   └── repository/        ← リポジトリインターフェース（ドメイン層に属する）
+│   ├── model/             ← Domain オブジェクト
+│   └── repository/        ← リポジトリインターフェース
 ├── infrastructure/
 │   └── persistence/
-│       ├── entity/        ← JPA エンティティ（ドメインモデルとは別クラス）
-│       ├── repository/    ← リポジトリ実装（例: UserRepositoryImpl）
-│       └── mapper/        ← MapStruct によるエンティティ ↔ ドメインモデル変換
-├── filter/                ← JwtAuthenticationFilter
-└── config/                ← SecurityConfig, PasswordEncoderConfig
+│       ├── entity/        ← JPA エンティティ
+│       ├── repository/    ← リポジトリ実装
+│       └── mapper/        ← MapStruct によるエンティティ ↔ Domain オブジェクト変換
+└── config/                ← Spring 設定クラス
 ```
 
 ## ファイル配置ルール
 
 | 種別                               | 配置先                                      |
 |----------------------------------|------------------------------------------|
-| Controller                       | `presentation/`                          |
+| Controller（`@RestController`）    | `presentation/`                          |
 | Request / Response DTO           | `presentation/`                          |
-| 例外ハンドラー（`@RestControllerAdvice`） | `presentation/`                          |
+| 例外ハンドラー（`@RestControllerAdvice`） | `presentation/advice/`                   |
+| JWT フィルター                        | `presentation/filter/`                   |
 | UseCase クラス（`@Service`）          | `application/`                           |
 | Command オブジェクト                   | `application/`                           |
-| ドメインモデル（`record`）                | `domain/model/`                          |
-| Value Object                     | `domain/model/vo/`                       |
+| Domain オブジェクト                    | `domain/model/`                          |
 | リポジトリインターフェース                    | `domain/repository/`                     |
 | JPA エンティティ（`@Entity`）            | `infrastructure/persistence/entity/`     |
 | リポジトリ実装（`@Repository`）           | `infrastructure/persistence/repository/` |
 | MapStruct マッパー                   | `infrastructure/persistence/mapper/`     |
-| JWT フィルター                        | `filter/`                                |
 | Spring 設定クラス（`@Configuration`）   | `config/`                                |
