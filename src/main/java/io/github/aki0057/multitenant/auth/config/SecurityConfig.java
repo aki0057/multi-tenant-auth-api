@@ -1,6 +1,6 @@
 package io.github.aki0057.multitenant.auth.config;
 
-import io.github.aki0057.multitenant.auth.filter.JwtAuthenticationFilter;
+import io.github.aki0057.multitenant.auth.presentation.filter.JwtAuthenticationFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

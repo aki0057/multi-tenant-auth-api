@@ -1,4 +1,4 @@
-package io.github.aki0057.multitenant.auth.filter;
+package io.github.aki0057.multitenant.auth.presentation.filter;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
