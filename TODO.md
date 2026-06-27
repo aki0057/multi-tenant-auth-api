@@ -4,9 +4,11 @@
 新規作成時は空のチェックボックスで追記し、実装が完了したらチェックを埋める。
 ## API (presentation)
 
+- [x] AuthController#login
+
 ## Service (application)
 
-- [x] AuthService#login(LoginCommand)
+- [ ] AuthService#login(LoginCommand) の JWT アクセストークン発行
 
 ## DomainObject (domain)
 - [ ] User

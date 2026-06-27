@@ -25,12 +25,14 @@ public class AuthService {
     /**
      * ログイン処理。
      * テナントコード・メールアドレスでユーザーを検索し、パスワードを照合する。
+     * 認証に成功した場合は JWT アクセストークンを返す。
      *
      * @param command ログインコマンド
+     * @return 発行された JWT アクセストークン
      * @throws BadCredentialsException ユーザーが存在しない / パスワード不一致 / アカウント無効の場合
      */
     @Transactional(readOnly = true)
-    public void login(LoginCommand command) {
+    public String login(LoginCommand command) {
         TenantCode tenantCode = new TenantCode(command.tenantCode());
         Email email = new Email(command.email());
         RawPassword rawPassword = new RawPassword(command.password());
@@ -48,6 +50,9 @@ public class AuthService {
             // パスワード不一致も認証失敗とする
             throw new BadCredentialsException("Invalid credentials");
         }
+
+        // TODO: 認証済み user から JWT アクセストークンを発行して返す
+        return "";
     }
 }
 
