@@ -7,6 +7,7 @@ import io.github.aki0057.multitenant.auth.domain.model.vo.Role;
 import io.github.aki0057.multitenant.auth.domain.model.vo.TenantCode;
 import io.github.aki0057.multitenant.auth.domain.model.vo.UserId;
 import io.github.aki0057.multitenant.auth.domain.repository.UserRepository;
+import io.github.aki0057.multitenant.auth.domain.service.AccessTokenProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,9 +20,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -32,6 +35,9 @@ class AuthServiceTest {
 
     @Mock
     private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private AccessTokenProvider accessTokenProvider;
 
     @InjectMocks
     private AuthService authService;
@@ -58,15 +64,18 @@ class AuthServiceTest {
     // ---------------------------------------------------------------
 
     @Test
-    @DisplayName("正常系: ユーザーが存在し、アカウントが有効で、パスワードが一致する場合は例外がスローされない。")
+    @DisplayName("正常系: 認証に成功した場合、AccessTokenProvider が発行したトークン文字列を返す。")
     void login_success() {
         when(userRepository.findByTenantCodeAndEmail(any(), any()))
                 .thenReturn(Optional.of(activeUser));
         when(passwordEncoder.matches("password", "hashed-pass"))
                 .thenReturn(true);
+        when(accessTokenProvider.issue(activeUser))
+                .thenReturn("issued-access-token");
 
-        assertThatCode(() -> authService.login(COMMAND))
-                .doesNotThrowAnyException();
+        String accessToken = authService.login(COMMAND);
+
+        assertThat(accessToken).isEqualTo("issued-access-token");
     }
 
     // ---------------------------------------------------------------
@@ -74,17 +83,18 @@ class AuthServiceTest {
     // ---------------------------------------------------------------
 
     @Test
-    @DisplayName("異常系: ユーザーが存在しない場合は BadCredentialsException がスローされる。")
+    @DisplayName("異常系: ユーザーが存在しない場合は BadCredentialsException がスローされ、トークンは発行されない。")
     void login_userNotFound() {
         when(userRepository.findByTenantCodeAndEmail(any(), any()))
                 .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> authService.login(COMMAND))
                 .isInstanceOf(BadCredentialsException.class);
+        verify(accessTokenProvider, never()).issue(any());
     }
 
     @Test
-    @DisplayName("異常系: アカウントが無効（active=false）の場合は BadCredentialsException がスローされる。")
+    @DisplayName("異常系: アカウントが無効（active=false）の場合は BadCredentialsException がスローされ、トークンは発行されない。")
     void login_accountInactive() {
         User inactiveUser = new User(
                 new UserId(1L),
@@ -99,10 +109,11 @@ class AuthServiceTest {
 
         assertThatThrownBy(() -> authService.login(COMMAND))
                 .isInstanceOf(BadCredentialsException.class);
+        verify(accessTokenProvider, never()).issue(any());
     }
 
     @Test
-    @DisplayName("異常系: パスワードが一致しない場合は BadCredentialsException がスローされる。")
+    @DisplayName("異常系: パスワードが一致しない場合は BadCredentialsException がスローされ、トークンは発行されない。")
     void login_wrongPassword() {
         when(userRepository.findByTenantCodeAndEmail(any(), any()))
                 .thenReturn(Optional.of(activeUser));
@@ -111,6 +122,6 @@ class AuthServiceTest {
 
         assertThatThrownBy(() -> authService.login(COMMAND))
                 .isInstanceOf(BadCredentialsException.class);
+        verify(accessTokenProvider, never()).issue(any());
     }
 }
-

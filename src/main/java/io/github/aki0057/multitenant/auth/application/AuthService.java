@@ -5,6 +5,7 @@ import io.github.aki0057.multitenant.auth.domain.model.vo.Email;
 import io.github.aki0057.multitenant.auth.domain.model.vo.RawPassword;
 import io.github.aki0057.multitenant.auth.domain.model.vo.TenantCode;
 import io.github.aki0057.multitenant.auth.domain.repository.UserRepository;
+import io.github.aki0057.multitenant.auth.domain.service.AccessTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -21,6 +22,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AccessTokenProvider accessTokenProvider;
 
     /**
      * ログイン処理。
@@ -51,8 +53,7 @@ public class AuthService {
             throw new BadCredentialsException("Invalid credentials");
         }
 
-        // TODO: 認証済み user から JWT アクセストークンを発行して返す
-        return "";
+        return accessTokenProvider.issue(user);
     }
 }
 

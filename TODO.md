@@ -8,7 +8,7 @@
 
 ## Service (application)
 
-- [ ] AuthService#login(LoginCommand) の JWT アクセストークン発行
+- [x] AuthService#login(LoginCommand) の JWT アクセストークン発行
 
 ## DomainObject (domain)
 - [ ] User
@@ -23,6 +23,14 @@
 
 ## Repository (domain)
 - [ ] findByTenantCodeAndEmail
+
+## Port (domain)
+- [ ] AccessTokenProvider#issue
+
 ## infrastructure.mapper
 
 - [x] UserMapper#toDomain(UserJpaEntity)
+
+## infrastructure.security
+
+- [ ] StubAccessTokenProvider を jjwt 実装へ置換
