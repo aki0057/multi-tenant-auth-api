@@ -47,10 +47,12 @@ class AuthServiceTest {
     void setUp() {
         activeUser = new User(
                 new UserId(1L),
+                new TenantId(1L),
                 new TenantCode("testTenant"),
                 new Email("test@example.com"),
                 new PasswordHash("hashed-pass"),
                 new Role("USER"),
+                true,
                 true
         );
     }
@@ -90,18 +92,41 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("異常系: アカウントが無効（active=false）の場合は BadCredentialsException がスローされ、トークンは発行されない。")
-    void login_accountInactive() {
+    @DisplayName("異常系: アカウントが無効（userIdIsActive=false）の場合は BadCredentialsException がスローされ、トークンは発行されない。")
+    void login_userAccountInactive() {
         User inactiveUser = new User(
                 new UserId(1L),
+                new TenantId(1L),
                 new TenantCode("testTenant"),
                 new Email("test@example.com"),
                 new PasswordHash("hashed-pass"),
                 new Role("USER"),
-                false
+                false,
+                true
         );
         when(userRepository.findByTenantCodeAndEmail(any(), any()))
                 .thenReturn(Optional.of(inactiveUser));
+
+        assertThatThrownBy(() -> authService.login(COMMAND))
+                .isInstanceOf(BadCredentialsException.class);
+        verify(accessTokenProvider, never()).issue(any());
+    }
+
+    @Test
+    @DisplayName("異常系: アカウントが無効（tenantIdIsActive=false）の場合は BadCredentialsException がスローされ、トークンは発行されない。")
+    void login_tenantAccountInactive() {
+        User inactiveTenantUser = new User(
+                new UserId(1L),
+                new TenantId(1L),
+                new TenantCode("testTenant"),
+                new Email("test@example.com"),
+                new PasswordHash("hashed-pass"),
+                new Role("USER"),
+                true,
+                false
+        );
+        when(userRepository.findByTenantCodeAndEmail(any(), any()))
+                .thenReturn(Optional.of(inactiveTenantUser));
 
         assertThatThrownBy(() -> authService.login(COMMAND))
                 .isInstanceOf(BadCredentialsException.class);
