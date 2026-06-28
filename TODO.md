@@ -5,6 +5,7 @@
 ## API (presentation)
 
 - [x] AuthController#login
+- [x] JwtAuthenticationFilter#doFilterInternal
 
 ## Service (application)
 
@@ -28,6 +29,7 @@
 ## Port (domain)
 - [x] AccessTokenProvider#issue
 - [x] PasswordVerifier#matches
+- [ ] AccessTokenVerifier#verify
 
 ## infrastructure.mapper
 
@@ -37,3 +39,4 @@
 
 - [x] StubAccessTokenProvider を jjwt 実装へ置換
 - [x] PasswordEncoderVerifier
+- [ ] StubAccessTokenVerifier を JwtAccessTokenVerifier へ置換

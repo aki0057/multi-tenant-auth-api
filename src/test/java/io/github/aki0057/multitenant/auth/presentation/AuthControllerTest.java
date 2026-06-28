@@ -3,6 +3,7 @@ package io.github.aki0057.multitenant.auth.presentation;
 import io.github.aki0057.multitenant.auth.application.AuthService;
 import io.github.aki0057.multitenant.auth.config.PasswordEncoderConfig;
 import io.github.aki0057.multitenant.auth.config.SecurityConfig;
+import io.github.aki0057.multitenant.auth.domain.service.AccessTokenVerifier;
 import io.github.aki0057.multitenant.auth.presentation.advice.GlobalExceptionHandler;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,10 @@ class AuthControllerTest {
 
     @MockitoBean
     private AuthService authService;
+
+    /** SecurityConfig#securityFilterChain が要求する依存を満たすためのモック。 */
+    @MockitoBean
+    private AccessTokenVerifier accessTokenVerifier;
 
     private static final String VALID_REQUEST = """
             {

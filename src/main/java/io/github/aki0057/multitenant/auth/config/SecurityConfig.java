@@ -1,5 +1,6 @@
 package io.github.aki0057.multitenant.auth.config;
 
+import io.github.aki0057.multitenant.auth.domain.service.AccessTokenVerifier;
 import io.github.aki0057.multitenant.auth.presentation.filter.JwtAuthenticationFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
@@ -16,12 +17,13 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     @Bean
-    public JwtAuthenticationFilter jwtAuthenticationFilter() {
-        return new JwtAuthenticationFilter();
+    public JwtAuthenticationFilter jwtAuthenticationFilter(AccessTokenVerifier accessTokenVerifier) {
+        return new JwtAuthenticationFilter(accessTokenVerifier);
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http, AccessTokenVerifier accessTokenVerifier) throws Exception {
         http
                 // REST APIはCSRF不要
                 .csrf(AbstractHttpConfigurer::disable)
@@ -55,7 +57,7 @@ public class SecurityConfig {
                 )
 
                 // JWTフィルターをUsernamePasswordAuthenticationFilterの前に挿入
-                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter(accessTokenVerifier), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
