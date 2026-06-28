@@ -15,7 +15,7 @@
       ↓
 [2] plan-verifier  requirements.md / tasklist.md を検証（読取専用）
       ↓ ──【ゲートA】ユーザーがプランを承認
-[3] implementer    src/ を実装（各編集をユーザーが確認）
+[3] implementer    src/ を実装（必ず**1ファイル編集するごとに**ユーザーが内容を確認）
       ↓
 [4] tester         テストを実行し green を検証（読取専用＋Bash）
       ↓
@@ -103,7 +103,7 @@
          ↓ 呼び出す
         domain (DomainObject / ValueObject / Repository)
          ↓ 呼び出す
-[内側] infrastructure (mapper)
+[内側] infrastructure (mapper / security)
 ```
 
 presentation から application への呼び出しでは、application 層に定義した入力 DTO（Command クラス。例: `LoginCommand`）を引数に渡す。Command の生成タイミングや `TODO.md` の扱いは「Command（Service の入力 DTO）の扱い」を参照。
@@ -146,7 +146,7 @@ Service の入力は、プリミティブ型を運ぶ入力 DTO（Command クラ
 （DDD のうち、今回作業する単一のレイヤーを 1 つだけ。例: application(Service)）
 
 ## 作業対象の種別
-（API / Service / DomainObject / ValueObject / Repository / infrastructure.mapper のいずれか 1 つ）
+（API / Service / DomainObject / ValueObject / Repository / infrastructure.mapper / infrastructure.security のいずれか 1 つ）
 
 ## 使用するテスト・フレームワーク等
 - テストフレームワーク:（JUnit か Mockito か）
@@ -175,7 +175,7 @@ Service の入力は、プリミティブ型を運ぶ入力 DTO（Command クラ
 - 戻り値:
 - 補足（作業対象が API の場合）: ここでの引数は入力 DTO の Command になる。Command はこのステップで作成するが、スタブ（実装しない・TODO のみ）ではなく作成と同時に完成扱いとし、`TODO.md` には登録しない。詳細は「Command（Service の入力 DTO）の扱い」を参照。
 
-## ドメインモデルの利用 (条件: 作業対象が Service / DomainObject / infrastructure.mapper のいずれか)
+## ドメインモデルの利用 (条件: 作業対象が Service / DomainObject / infrastructure.mapper / infrastructure.security のいずれか)
 プリミティブ型への依存を禁止する。必ず DomainObject または ValueObject を作成または既存のものを利用する。
 ただし、Service の入力 DTO である Command クラスは例外とし、プリミティブ型を保持してよい（外側との境界を表すため）。Command が保持するプリミティブは、Service の入口で ValueObject / DomainObject に変換する。変換せずプリミティブのまま Service 本体やドメイン層へ持ち込むことを禁止する。Command の扱いは「Command（Service の入力 DTO）の扱い」を参照。
 作成する DomainObject / ValueObject はスタブとする（実装しない・TODO のみ）。
@@ -207,14 +207,15 @@ Service の入力は、プリミティブ型を運ぶ入力 DTO（Command クラ
 
 各セルは requirements.md / tasklist.md に記載した条件をそのまま機械的に適用した結果である。
 
-| 作業対象の種別               | 外側メソッドを記載<br>(条件: API でない) | 内側スタブを作成・登録<br>(条件: VO/Repository でない) | DomainObject/VO を作成<br>(条件: Service/DomainObject/mapper) |
-|-----------------------|:--------------------------:|:--------------------------------------:|:--------------------------------------------------------:|
-| API (presentation)    |             ─              |                   ✓                    |                            ─                             |
-| Service (application) |             ✓              |                   ✓                    |                            ✓                             |
-| DomainObject (domain) |             ✓              |                   ✓                    |                            ✓                             |
-| ValueObject (domain)  |             ✓              |                   ─                    |                            ─                             |
-| Repository (domain)   |             ✓              |                   ─                    |                            ─                             |
-| infrastructure.mapper |             ✓              |                   ✓                    |                            ✓                             |
+| 作業対象の種別                 | 外側メソッドを記載<br>(条件: API でない) | 内側スタブを作成・登録<br>(条件: VO/Repository でない) | DomainObject/VO を作成<br>(条件: Service/DomainObject/mapper) |
+|-------------------------|:--------------------------:|:--------------------------------------:|:--------------------------------------------------------:|
+| API (presentation)      |             ─              |                   ✓                    |                            ─                             |
+| Service (application)   |             ✓              |                   ✓                    |                            ✓                             |
+| DomainObject (domain)   |             ✓              |                   ✓                    |                            ✓                             |
+| ValueObject (domain)    |             ✓              |                   ─                    |                            ─                             |
+| Repository (domain)     |             ✓              |                   ─                    |                            ─                             |
+| infrastructure.mapper   |             ✓              |                   ✓                    |                            ✓                             |
+| infrastructure.security |             ✓              |                   ✓                    |                            ✓                             |
 
 ## TODO.md との関係（補足）
 

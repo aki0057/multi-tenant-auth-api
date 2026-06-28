@@ -26,7 +26,7 @@
 - [ ] findByTenantCodeAndEmail
 
 ## Port (domain)
-- [ ] AccessTokenProvider#issue
+- [x] AccessTokenProvider#issue
 - [x] PasswordVerifier#matches
 
 ## infrastructure.mapper
@@ -35,5 +35,5 @@
 
 ## infrastructure.security
 
-- [ ] StubAccessTokenProvider を jjwt 実装へ置換
+- [x] StubAccessTokenProvider を jjwt 実装へ置換
 - [x] PasswordEncoderVerifier

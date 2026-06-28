@@ -22,6 +22,7 @@
 | Domain オブジェクト / ValueObject             | `domain/model/`（vo は `domain/model/vo/`） | なし（プレーンな JUnit）                                                                                                                   | Spring 未起動     | なし                                   |
 | リポジトリ実装（`@Repository`）/ Spring Data JPA | `infrastructure/persistence/repository/` | `@DataJpaTest`                                                                                                                    | JPA レイヤーのみ（H2） | なし（実 DB）                             |
 | MapStruct マッパー                          | `infrastructure/persistence/mapper/`     | なし（`Mappers.getMapper(XxxMapper.class)` でインスタンス化）                                                                                 | Spring 未起動     | なし                                   |
+| 技術アダプター（ドメインポート実装）                      | `infrastructure/security/`               | なし（コンストラクタで直接インスタンス化）                                                                                                             | Spring 未起動     | なし                                   |
 | 結合テスト（横断）                               | —                                        | `@SpringBootTest` + `@AutoConfigureMockMvc` + `@ActiveProfiles("test")`                                                           | フルコンテキスト（H2）   | なし                                   |
 
 ### ② テストを作成しない種別
@@ -59,7 +60,7 @@ methodName_condition()
 | 結合テスト（横断）                                    | `@BeforeEach` / `@AfterEach` で `JdbcTemplate` により直接 INSERT / DELETE |
 | リポジトリ実装 / Spring Data JPA                    | `TestEntityManager` で `persist()`                                   |
 | Controller / UseCase・Service                 | テストメソッド内または `@BeforeEach` のフィクスチャ（モックの戻り値として用意）                     |
-| Domain オブジェクト / ValueObject / MapStruct マッパー | テストメソッド内で直接生成する                                                     |
+| Domain オブジェクト / ValueObject / MapStruct マッパー / 技術アダプター（ドメインポート実装） | テストメソッド内で直接生成する                                                     |
 
 ## テストプロファイル
 

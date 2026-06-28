@@ -4,9 +4,8 @@ import io.github.aki0057.multitenant.auth.domain.model.User;
 
 /**
  * 認証済みユーザーから JWT アクセストークンを発行するドメインポート。
- * トークン生成方式（jjwt など）の詳細は infrastructure 層の実装に委ねる。
+ * トークン生成方式の詳細は infrastructure 層の実装に委ねる。
  */
-// TODO: 実装クラスは後続の infrastructure(jjwt) 増分で作成する（スタブ）。
 public interface AccessTokenProvider {
 
     /**
