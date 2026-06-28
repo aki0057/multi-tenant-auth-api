@@ -4,6 +4,7 @@ import io.github.aki0057.multitenant.auth.domain.model.User;
 import io.github.aki0057.multitenant.auth.domain.model.vo.*;
 import io.github.aki0057.multitenant.auth.domain.repository.UserRepository;
 import io.github.aki0057.multitenant.auth.domain.service.AccessTokenProvider;
+import io.github.aki0057.multitenant.auth.domain.service.PasswordVerifier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,7 +13,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
 
@@ -30,7 +30,7 @@ class AuthServiceTest {
     private UserRepository userRepository;
 
     @Mock
-    private PasswordEncoder passwordEncoder;
+    private PasswordVerifier passwordVerifier;
 
     @Mock
     private AccessTokenProvider accessTokenProvider;
@@ -66,7 +66,7 @@ class AuthServiceTest {
     void login_success() {
         when(userRepository.findByTenantCodeAndEmail(any(), any()))
                 .thenReturn(Optional.of(activeUser));
-        when(passwordEncoder.matches("password", "hashed-pass"))
+        when(passwordVerifier.matches(any(), any()))
                 .thenReturn(true);
         when(accessTokenProvider.issue(activeUser))
                 .thenReturn("issued-access-token");
@@ -92,54 +92,12 @@ class AuthServiceTest {
     }
 
     @Test
-    @DisplayName("異常系: アカウントが無効（userIdIsActive=false）の場合は BadCredentialsException がスローされ、トークンは発行されない。")
-    void login_userAccountInactive() {
-        User inactiveUser = new User(
-                new UserId(1L),
-                new TenantId(1L),
-                new TenantCode("testTenant"),
-                new Email("test@example.com"),
-                new PasswordHash("hashed-pass"),
-                new Role("USER"),
-                false,
-                true
-        );
-        when(userRepository.findByTenantCodeAndEmail(any(), any()))
-                .thenReturn(Optional.of(inactiveUser));
-
-        assertThatThrownBy(() -> authService.login(COMMAND))
-                .isInstanceOf(BadCredentialsException.class);
-        verify(accessTokenProvider, never()).issue(any());
-    }
-
-    @Test
-    @DisplayName("異常系: アカウントが無効（tenantIdIsActive=false）の場合は BadCredentialsException がスローされ、トークンは発行されない。")
-    void login_tenantAccountInactive() {
-        User inactiveTenantUser = new User(
-                new UserId(1L),
-                new TenantId(1L),
-                new TenantCode("testTenant"),
-                new Email("test@example.com"),
-                new PasswordHash("hashed-pass"),
-                new Role("USER"),
-                true,
-                false
-        );
-        when(userRepository.findByTenantCodeAndEmail(any(), any()))
-                .thenReturn(Optional.of(inactiveTenantUser));
-
-        assertThatThrownBy(() -> authService.login(COMMAND))
-                .isInstanceOf(BadCredentialsException.class);
-        verify(accessTokenProvider, never()).issue(any());
-    }
-
-    @Test
-    @DisplayName("異常系: パスワードが一致しない場合は BadCredentialsException がスローされ、トークンは発行されない。")
-    void login_wrongPassword() {
+    @DisplayName("異常系: User の認証が失敗（AuthenticationFailedException）した場合は BadCredentialsException に変換され、トークンは発行されない。")
+    void login_authenticationFailed() {
         when(userRepository.findByTenantCodeAndEmail(any(), any()))
                 .thenReturn(Optional.of(activeUser));
-        when(passwordEncoder.matches("password", "hashed-pass"))
-                .thenReturn(false);  // パスワード不一致
+        when(passwordVerifier.matches(any(), any()))
+                .thenReturn(false);
 
         assertThatThrownBy(() -> authService.login(COMMAND))
                 .isInstanceOf(BadCredentialsException.class);

@@ -1,15 +1,16 @@
 package io.github.aki0057.multitenant.auth.application;
 
+import io.github.aki0057.multitenant.auth.domain.exception.AuthenticationFailedException;
 import io.github.aki0057.multitenant.auth.domain.model.User;
 import io.github.aki0057.multitenant.auth.domain.model.vo.Email;
 import io.github.aki0057.multitenant.auth.domain.model.vo.RawPassword;
 import io.github.aki0057.multitenant.auth.domain.model.vo.TenantCode;
 import io.github.aki0057.multitenant.auth.domain.repository.UserRepository;
 import io.github.aki0057.multitenant.auth.domain.service.AccessTokenProvider;
+import io.github.aki0057.multitenant.auth.domain.service.PasswordVerifier;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,12 +23,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class AuthService {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final PasswordVerifier passwordVerifier;
     private final AccessTokenProvider accessTokenProvider;
 
     /**
      * ログイン処理。
-     * テナントコード・メールアドレスでユーザーを検索し、パスワードを照合する。
+     * テナントコード・メールアドレスでユーザーを検索し、認証を行う。
      * 認証に成功した場合は JWT アクセストークンを返す。
      *
      * @param command ログインコマンド
@@ -44,22 +45,13 @@ public class AuthService {
                 .findByTenantCodeAndEmail(tenantCode, email)
                 .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
 
-        if (!user.userIdIsActive()) {
-            // userが存在してもアカウントが無効な場合は認証失敗とする
-            throw new BadCredentialsException("Invalid credentials");
-        }
-
-        if (!user.tenantIdIsActive()) {
-            // tenantが存在してもアカウントが無効な場合は認証失敗とする
-            throw new BadCredentialsException("Invalid credentials");
-        }
-
-        if (!passwordEncoder.matches(rawPassword.value(), user.passwordHash().value())) {
-            // パスワード不一致も認証失敗とする
+        try {
+            user.authenticate(rawPassword, passwordVerifier);
+        } catch (AuthenticationFailedException e) {
+            // ドメインの認証失敗を、認証 API の共通レスポンスへ変換する
             throw new BadCredentialsException("Invalid credentials");
         }
 
         return accessTokenProvider.issue(user);
     }
 }
-

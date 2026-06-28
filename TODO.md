@@ -11,7 +11,7 @@
 - [x] AuthService#login(LoginCommand) の JWT アクセストークン発行
 
 ## DomainObject (domain)
-- [ ] User
+- [x] User#authenticate
 
 ## ValueObject (domain)
 - [ ] Email
@@ -27,6 +27,7 @@
 
 ## Port (domain)
 - [ ] AccessTokenProvider#issue
+- [x] PasswordVerifier#matches
 
 ## infrastructure.mapper
 
@@ -35,3 +36,4 @@
 ## infrastructure.security
 
 - [ ] StubAccessTokenProvider を jjwt 実装へ置換
+- [x] PasswordEncoderVerifier
