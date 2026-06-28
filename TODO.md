@@ -18,8 +18,9 @@
 - [ ] Password
 - [ ] RawPassword
 - [ ] Role
-- [ ] TenantCode
-- [ ] UserId
+- [x] TenantCode
+- [x] TenantId
+- [x] UserId
 
 ## Repository (domain)
 - [ ] findByTenantCodeAndEmail

@@ -38,10 +38,10 @@ class LoginIntegrationTest {
         jdbcTemplate.update(
                 "INSERT INTO tenants (code, name, is_active, created_at, updated_at, created_by, updated_by) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?)",
-                "test-tenant", "テストテナント", true, now, now, "system", "system");
+                "testTenant", "テストテナント", true, now, now, "system", "system");
 
         Long tenantId = jdbcTemplate.queryForObject(
-                "SELECT id FROM tenants WHERE code = 'test-tenant'", Long.class);
+                "SELECT id FROM tenants WHERE code = 'testTenant'", Long.class);
 
         // テスト実行時に BCrypt ハッシュを生成する
         String hash = passwordEncoder.encode("password");
@@ -55,7 +55,7 @@ class LoginIntegrationTest {
     @AfterEach
     void tearDown() {
         jdbcTemplate.update("DELETE FROM users WHERE email = 'test@example.com'");
-        jdbcTemplate.update("DELETE FROM tenants WHERE code = 'test-tenant'");
+        jdbcTemplate.update("DELETE FROM tenants WHERE code = 'testTenant'");
     }
 
     @Test
@@ -65,7 +65,7 @@ class LoginIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "tenantCode": "test-tenant",
+                                  "tenantCode": "testTenant",
                                   "email": "test@example.com",
                                   "password": "password"
                                 }

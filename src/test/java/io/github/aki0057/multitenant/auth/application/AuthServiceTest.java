@@ -1,11 +1,7 @@
 package io.github.aki0057.multitenant.auth.application;
 
 import io.github.aki0057.multitenant.auth.domain.model.User;
-import io.github.aki0057.multitenant.auth.domain.model.vo.Email;
-import io.github.aki0057.multitenant.auth.domain.model.vo.PasswordHash;
-import io.github.aki0057.multitenant.auth.domain.model.vo.Role;
-import io.github.aki0057.multitenant.auth.domain.model.vo.TenantCode;
-import io.github.aki0057.multitenant.auth.domain.model.vo.UserId;
+import io.github.aki0057.multitenant.auth.domain.model.vo.*;
 import io.github.aki0057.multitenant.auth.domain.repository.UserRepository;
 import io.github.aki0057.multitenant.auth.domain.service.AccessTokenProvider;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,7 +39,7 @@ class AuthServiceTest {
     private AuthService authService;
 
     private static final LoginCommand COMMAND =
-            new LoginCommand("test-tenant", "test@example.com", "password");
+            new LoginCommand("testTenant", "test@example.com", "password");
 
     private User activeUser;
 
@@ -51,7 +47,7 @@ class AuthServiceTest {
     void setUp() {
         activeUser = new User(
                 new UserId(1L),
-                new TenantCode("test-tenant"),
+                new TenantCode("testTenant"),
                 new Email("test@example.com"),
                 new PasswordHash("hashed-pass"),
                 new Role("USER"),
@@ -98,7 +94,7 @@ class AuthServiceTest {
     void login_accountInactive() {
         User inactiveUser = new User(
                 new UserId(1L),
-                new TenantCode("test-tenant"),
+                new TenantCode("testTenant"),
                 new Email("test@example.com"),
                 new PasswordHash("hashed-pass"),
                 new Role("USER"),
