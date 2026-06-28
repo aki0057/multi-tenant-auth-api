@@ -29,7 +29,7 @@
 ## Port (domain)
 - [x] AccessTokenProvider#issue
 - [x] PasswordVerifier#matches
-- [ ] AccessTokenVerifier#verify
+- [x] AccessTokenVerifier#verify
 
 ## infrastructure.mapper
 
@@ -39,4 +39,4 @@
 
 - [x] StubAccessTokenProvider を jjwt 実装へ置換
 - [x] PasswordEncoderVerifier
-- [ ] StubAccessTokenVerifier を JwtAccessTokenVerifier へ置換
+- [x] StubAccessTokenVerifier を JwtAccessTokenVerifier へ置換

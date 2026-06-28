@@ -18,5 +18,4 @@ public interface AccessTokenVerifier {
      * @return トークンのクレームから復元した認証情報
      */
     AuthenticatedUser verify(String token);
-    // TODO: 増分2（infrastructure.security の JwtAccessTokenVerifier）で本実装する
 }
