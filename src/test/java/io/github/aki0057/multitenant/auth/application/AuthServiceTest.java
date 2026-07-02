@@ -103,4 +103,37 @@ class AuthServiceTest {
                 .isInstanceOf(BadCredentialsException.class);
         verify(accessTokenProvider, never()).issue(any());
     }
+
+    @Test
+    @DisplayName("異常系: tenantCode が形式不正（記号を含む）な場合は BadCredentialsException に変換され、トークンは発行されない。")
+    void login_invalidTenantCodeFormat() {
+        LoginCommand command =
+                new LoginCommand("bad!tenant", "test@example.com", "password");
+
+        assertThatThrownBy(() -> authService.login(command))
+                .isInstanceOf(BadCredentialsException.class);
+        verify(accessTokenProvider, never()).issue(any());
+    }
+
+    @Test
+    @DisplayName("異常系: email が形式不正（ドット無し a@b）な場合は BadCredentialsException に変換され、トークンは発行されない。")
+    void login_invalidEmailFormat() {
+        LoginCommand command =
+                new LoginCommand("testTenant", "a@b", "password");
+
+        assertThatThrownBy(() -> authService.login(command))
+                .isInstanceOf(BadCredentialsException.class);
+        verify(accessTokenProvider, never()).issue(any());
+    }
+
+    @Test
+    @DisplayName("異常系: password が形式不正（8 文字未満）な場合は BadCredentialsException に変換され、トークンは発行されない。")
+    void login_invalidPasswordFormat() {
+        LoginCommand command =
+                new LoginCommand("testTenant", "test@example.com", "short");
+
+        assertThatThrownBy(() -> authService.login(command))
+                .isInstanceOf(BadCredentialsException.class);
+        verify(accessTokenProvider, never()).issue(any());
+    }
 }

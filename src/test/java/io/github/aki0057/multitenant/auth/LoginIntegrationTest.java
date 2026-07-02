@@ -68,5 +68,20 @@ class LoginIntegrationTest {
                                 """))
                 .andExpect(status().isOk());
     }
+
+    @Test
+    @DisplayName("異常系: 形式不正な tenantCode（記号を含む）を送信すると 401 Unauthorized が返る")
+    void login_withInvalidFormatCredentials_returns401() throws Exception {
+        mockMvc.perform(post("/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "tenantCode": "bad!tenant",
+                                  "email": "test@example.com",
+                                  "password": "password"
+                                }
+                                """))
+                .andExpect(status().isUnauthorized());
+    }
 }
 
