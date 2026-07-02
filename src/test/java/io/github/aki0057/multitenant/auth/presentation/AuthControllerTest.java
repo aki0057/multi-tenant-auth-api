@@ -47,7 +47,7 @@ class AuthControllerTest {
     private static final String INVALID_REQUEST = """
                 {
                   "tenantCode": "",
-                  "email": "not-an-email",
+                  "email": "",
                   "password": ""
                 }
                 """;
