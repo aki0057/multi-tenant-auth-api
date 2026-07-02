@@ -15,7 +15,7 @@
 - [x] User#authenticate
 
 ## ValueObject (domain)
-- [ ] Email
+- [x] Email
 - [ ] PasswordHash
 - [ ] RawPassword
 - [x] Role
