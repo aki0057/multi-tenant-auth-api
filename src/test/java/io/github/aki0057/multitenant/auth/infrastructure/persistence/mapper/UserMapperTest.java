@@ -30,7 +30,7 @@ class UserMapperTest {
                 .id(1L)
                 .tenant(tenant)
                 .email("user@example.com")
-                .passwordHash("$2a$10$hashedpassword")
+                .passwordHash("$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy")
                 .role("ADMIN")
                 .active(true)
                 .build();
@@ -41,7 +41,7 @@ class UserMapperTest {
         assertThat(user.tenantId().value()).isEqualTo(10L);
         assertThat(user.tenantCode().value()).isEqualTo("acme");
         assertThat(user.email().value()).isEqualTo("user@example.com");
-        assertThat(user.passwordHash().value()).isEqualTo("$2a$10$hashedpassword");
+        assertThat(user.passwordHash().value()).isEqualTo("$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy");
         assertThat(user.role().value()).isEqualTo("ADMIN");
         assertThat(user.userIdIsActive()).isTrue();
         assertThat(user.tenantIdIsActive()).isTrue();
@@ -59,7 +59,7 @@ class UserMapperTest {
                 .id(1L)
                 .tenant(tenant)
                 .email("user@example.com")
-                .passwordHash("$2a$10$hashedpassword")
+                .passwordHash("$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy")
                 .role("ADMIN")
                 .active(false)
                 .build();
@@ -82,7 +82,7 @@ class UserMapperTest {
                 .id(1L)
                 .tenant(tenant)
                 .email("user@example.com")
-                .passwordHash("$2a$10$hashedpassword")
+                .passwordHash("$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy")
                 .role("ADMIN")
                 .active(true)
                 .build();
@@ -103,7 +103,7 @@ class UserMapperTest {
                 .id(1L)
                 .tenant(tenant)
                 .email("user@example.com")
-                .passwordHash("$2a$10$hashedpassword")
+                .passwordHash("$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy")
                 .role("ADMIN")
                 .active(true)
                 .build();

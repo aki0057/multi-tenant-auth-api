@@ -25,7 +25,7 @@ class UserTest {
                 new TenantId(1L),
                 new TenantCode("testTenant"),
                 new Email("test@example.com"),
-                new PasswordHash("hashed-pass"),
+                new PasswordHash("$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"),
                 new Role("USER"),
                 userIdIsActive,
                 tenantIdIsActive

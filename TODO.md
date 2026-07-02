@@ -16,7 +16,7 @@
 
 ## ValueObject (domain)
 - [x] Email
-- [ ] PasswordHash
+- [x] PasswordHash
 - [x] RawPassword
 - [x] Role
 - [x] TenantCode
