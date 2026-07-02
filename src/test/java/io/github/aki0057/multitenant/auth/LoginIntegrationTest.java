@@ -83,5 +83,19 @@ class LoginIntegrationTest {
                                 """))
                 .andExpect(status().isUnauthorized());
     }
+
+    @Test
+    @DisplayName("異常系: 壊れた JSON ボディを送信すると 400 Bad Request が返る")
+    void login_withMalformedJson_returns400() throws Exception {
+        mockMvc.perform(post("/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "tenantCode": "testTenant",
+                                  "email": "test@example.com",
+                                  "password": "password"
+                                """))
+                .andExpect(status().isBadRequest());
+    }
 }
 

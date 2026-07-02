@@ -4,6 +4,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpInputMessage;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -62,6 +64,19 @@ class GlobalExceptionHandlerTest {
     @DisplayName("MethodArgumentNotValidException が発生した場合、400 Bad Request が返る")
     void handleValidation_returns400() throws Exception {
         EXCEPTION_HOLDER.set(mock(MethodArgumentNotValidException.class));
+
+        mockMvc.perform(get("/throw"))
+                .andExpect(status().isBadRequest());
+    }
+
+    // -------------------------------------------------------------------------
+    // HttpMessageNotReadableException → 400
+    // -------------------------------------------------------------------------
+
+    @Test
+    @DisplayName("HttpMessageNotReadableException が発生した場合、400 Bad Request が返る")
+    void handleMessageNotReadable_returns400() throws Exception {
+        EXCEPTION_HOLDER.set(new HttpMessageNotReadableException("malformed json", mock(HttpInputMessage.class)));
 
         mockMvc.perform(get("/throw"))
                 .andExpect(status().isBadRequest());
