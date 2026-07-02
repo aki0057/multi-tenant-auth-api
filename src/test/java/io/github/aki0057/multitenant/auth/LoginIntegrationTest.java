@@ -12,6 +12,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 
@@ -21,6 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Transactional
 class LoginIntegrationTest {
 
     @Autowired
@@ -50,12 +52,6 @@ class LoginIntegrationTest {
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 tenantId, "test@example.com", hash,
                 "USER", true, now, now, "system", "system");
-    }
-
-    @AfterEach
-    void tearDown() {
-        jdbcTemplate.update("DELETE FROM users WHERE email = 'test@example.com'");
-        jdbcTemplate.update("DELETE FROM tenants WHERE code = 'testTenant'");
     }
 
     @Test
