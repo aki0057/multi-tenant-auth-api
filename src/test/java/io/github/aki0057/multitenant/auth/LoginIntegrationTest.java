@@ -97,5 +97,106 @@ class LoginIntegrationTest {
                                 """))
                 .andExpect(status().isBadRequest());
     }
+
+    @Test
+    @DisplayName("異常系: パスワードが一致しない場合は 401 Unauthorized が返る")
+    void login_withWrongPassword_returns401() throws Exception {
+        mockMvc.perform(post("/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "tenantCode": "testTenant",
+                                  "email": "test@example.com",
+                                  "password": "wrongPassword"
+                                }
+                                """))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("異常系: 存在しないユーザーの email を送信すると 401 Unauthorized が返る")
+    void login_withNonExistentUser_returns401() throws Exception {
+        mockMvc.perform(post("/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "tenantCode": "testTenant",
+                                  "email": "notfound@example.com",
+                                  "password": "password"
+                                }
+                                """))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("異常系: 無効なアカウント（is_active = false）で送信すると 401 Unauthorized が返る")
+    void login_withInactiveAccount_returns401() throws Exception {
+        OffsetDateTime now = OffsetDateTime.now();
+        Long tenantId = jdbcTemplate.queryForObject(
+                "SELECT id FROM tenants WHERE code = 'testTenant'", Long.class);
+
+        String hash = passwordEncoder.encode("password");
+        jdbcTemplate.update(
+                "INSERT INTO users (tenant_id, email, password_hash, role, is_active, created_at, updated_at, created_by, updated_by) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                tenantId, "inactive-user@example.com", hash,
+                "USER", false, now, now, "system", "system");
+
+        mockMvc.perform(post("/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "tenantCode": "testTenant",
+                                  "email": "inactive-user@example.com",
+                                  "password": "password"
+                                }
+                                """))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("異常系: 無効なテナント（is_active = false）で送信すると 401 Unauthorized が返る")
+    void login_withInactiveTenant_returns401() throws Exception {
+        OffsetDateTime now = OffsetDateTime.now();
+        jdbcTemplate.update(
+                "INSERT INTO tenants (code, name, is_active, created_at, updated_at, created_by, updated_by) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                "inactiveTenant", "無効テナント", false, now, now, "system", "system");
+
+        Long tenantId = jdbcTemplate.queryForObject(
+                "SELECT id FROM tenants WHERE code = 'inactiveTenant'", Long.class);
+
+        String hash = passwordEncoder.encode("password");
+        jdbcTemplate.update(
+                "INSERT INTO users (tenant_id, email, password_hash, role, is_active, created_at, updated_at, created_by, updated_by) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                tenantId, "inactive-tenant-user@example.com", hash,
+                "USER", true, now, now, "system", "system");
+
+        mockMvc.perform(post("/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "tenantCode": "inactiveTenant",
+                                  "email": "inactive-tenant-user@example.com",
+                                  "password": "password"
+                                }
+                                """))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("異常系: 必須項目（password）が欠落している場合は 400 Bad Request が返る")
+    void login_withMissingRequiredField_returns400() throws Exception {
+        mockMvc.perform(post("/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "tenantCode": "testTenant",
+                                  "email": "test@example.com"
+                                }
+                                """))
+                .andExpect(status().isBadRequest());
+    }
 }
 
