@@ -70,7 +70,7 @@ class JwtAuthenticationFilterTest {
         assertThat(authentication.getCredentials()).isNull();
         assertThat(authentication.getAuthorities())
                 .extracting(GrantedAuthority::getAuthority)
-                .containsExactly("ROLE_ADMIN");
+                .containsExactly("ADMIN");
         // doFilter が呼ばれたことを、チェーンへ渡されたリクエストで確認する
         assertThat(filterChain.getRequest()).isSameAs(request);
     }

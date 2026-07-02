@@ -16,7 +16,7 @@
 
 ## ValueObject (domain)
 - [ ] Email
-- [ ] Password
+- [ ] PasswordHash
 - [ ] RawPassword
 - [ ] Role
 - [x] TenantCode
@@ -24,7 +24,7 @@
 - [x] UserId
 
 ## Repository (domain)
-- [ ] findByTenantCodeAndEmail
+- [x] findByTenantCodeAndEmail
 
 ## Port (domain)
 - [x] AccessTokenProvider#issue

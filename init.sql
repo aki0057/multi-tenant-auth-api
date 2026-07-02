@@ -46,12 +46,12 @@ CREATE TABLE refresh_tokens (
 
 -- 1. テナント（users より先に INSERT する必要がある）
 INSERT INTO tenants (code, name, is_active, created_at, updated_at, created_by, updated_by)
-VALUES ('test-tenant', 'テストテナント', TRUE, NOW(), NOW(), 'system', 'system');
+VALUES ('testTenant', 'テストテナント', TRUE, NOW(), NOW(), 'system', 'system');
 
 -- 2. ユーザー（password: "password" を BCrypt でハッシュ化した値）
 INSERT INTO users (tenant_id, email, password_hash, role, is_active, created_at, updated_at, created_by, updated_by)
 VALUES (
-           (SELECT id FROM tenants WHERE code = 'test-tenant'),
+           (SELECT id FROM tenants WHERE code = 'testTenant'),
            'test@example.com',
            '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
            'ROLE_USER',
@@ -62,7 +62,7 @@ VALUES (
 -- 3. リフレッシュトークン（生トークン: "test-refresh-token" を SHA-256 でハッシュ化した値）
 INSERT INTO refresh_tokens (tenant_id, user_id, token_hash, expires_at, is_revoked, created_at, updated_at, created_by, updated_by)
 VALUES (
-           (SELECT id FROM tenants WHERE code = 'test-tenant'),
+           (SELECT id FROM tenants WHERE code = 'testTenant'),
            (SELECT id FROM users WHERE email = 'test@example.com'),
            'a0d4b6e8f2c14e6a8b0d2f4a6e8c0b2d4f6a8e0c2b4d6f8a0e2c4b6d8f0a2e4',
            NOW() + INTERVAL '7 days',

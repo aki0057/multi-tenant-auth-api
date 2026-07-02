@@ -49,7 +49,7 @@ class LoginIntegrationTest {
                 "INSERT INTO users (tenant_id, email, password_hash, role, is_active, created_at, updated_at, created_by, updated_by) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 tenantId, "test@example.com", hash,
-                "ROLE_USER", true, now, now, "system", "system");
+                "USER", true, now, now, "system", "system");
     }
 
     @AfterEach

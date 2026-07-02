@@ -38,7 +38,7 @@ class AuthControllerTest {
 
     private static final String VALID_REQUEST = """
             {
-              "tenantCode": "test-tenant",
+              "tenantCode": "testTenant",
               "email": "test@example.com",
               "password": "password"
             }
