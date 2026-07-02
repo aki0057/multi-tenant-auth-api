@@ -8,12 +8,13 @@ Spring Boot を用いたマルチテナント対応の認証認可 API プロジ
 
 ## ドキュメント
 
-| ファイル                             | 内容                    |
-|----------------------------------|-----------------------|
-| `docs/architecture.md`           | マルチテナント方式・ドメインモデル設計方針 |
-| `docs/repository-structure.md`   | ディレクトリ構成・ファイル配置ルール    |
-| `docs/database-design.md`        | ER 図・テーブル定義・共通カラム方針   |
-| `docs/development-guidelines.md` | コーディング規約・ドキュメント管理ルール  |
+| ファイル                           | 内容                                     |
+|--------------------------------|----------------------------------------|
+| `docs/repository-structure.md` | ディレクトリ構成・ファイル配置ルール                     |
+| `docs/database-design.md`      | ER 図・テーブル定義・共通カラム方針                    |
+| `docs/file-change-workflow.md` | ファイル変更手順・DDD アーキテクチャ・スタブ / Command の扱い |
+| `docs/testing-guidelines.md`   | レイヤー別テスト方針・命名規則・テストデータ管理               |
+| `docs/git-conventions.md`      | コミットメッセージ規約（type・prefix）               |
 
 ---
 
@@ -23,17 +24,17 @@ Spring Boot を用いたマルチテナント対応の認証認可 API プロジ
 # ローカルDB起動（要 .env ファイル）
 docker compose up -d
 
-# ビルド（テスト含む）
-./mvnw clean install
+# 特定クラスのテストを実行（FooTest は実際のテストクラス名に置き換える）
+./mvnw test -Dtest=<FooTest>
 
 # テストのみ
 ./mvnw clean test
 
-# 特定クラスのテストを実行
-./mvnw test -Dtest=LoginIntegrationTest
-
 # カバレッジレポート生成（target/site/jacoco/index.html）
-./mvnw verify
+./mvnw clean verify
+
+# ビルド
+./mvnw clean install
 ```
 
 テスト実行にローカル DB は不要。テストプロファイル（`@ActiveProfiles("test")`）では H2 インメモリ DB を使用する。
@@ -42,36 +43,5 @@ docker compose up -d
 
 ## 重要制約
 
-- `accessDeniedHandler` は 403 ではなく **404 を返す**（リソース存在を隠蔽するセキュリティ要件）
-- `JwtAuthenticationFilter` は現在 **曳光弾用のスタブ**。全リクエストを `dev-user` として認証通過させている。`JwtService` 実装後にダミー認証を削除する
-- セッションは STATELESS、CSRF 無効
-
----
-
-## 作業開始プロセス
-
-新しい作業を開始する前に、必ず以下の手順を実施すること。
-
-### 1. ステアリングディレクトリの作成
-
-```bash
-mkdir -p .steering/[YYYYMMDD]-[作業内容]
-```
-
-**命名規則：**
-
-```
-.steering/[YYYYMMDD]-[作業内容]/
-```
-
-例：
-- `.steering/20240101-feat-login-endpoint/`
-- `.steering/20240215-fix-filer-bug/`
-- `.steering/20240310-refactor-auth-service/`
-
-### 2. 作業ドキュメントの作成
-
-以下のファイルを作成し、内容を記述する。
-
-- `.steering/[YYYYMMDD]-[作業内容]/requirements.md` — 要件の定義
-- `.steering/[YYYYMMDD]-[作業内容]/tasklist.md` — 作業内容の定義
+- 当プロジェクトの**全て**のファイルは、ユーザーの許可なく変更してはならない。
+- `src/`配下のファイルを変更するすべての作業は、必ず `docs/file-change-workflow.md` のパイプラインに従う。メインセッションが planner → plan-verifier →【ユーザー承認】→ implementer → tester → done-auditor の 5 段階を順に駆動する。

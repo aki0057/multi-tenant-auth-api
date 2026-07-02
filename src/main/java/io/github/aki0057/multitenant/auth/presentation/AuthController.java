@@ -15,13 +15,20 @@ public class AuthController {
 
     private final AuthService authService;
 
+    /**
+     * ログインエンドポイント。
+     * 認証情報を検証し、成功した場合は JWT アクセストークンを JSON で返す。
+     *
+     * @param request ログインリクエスト（テナントコード・メールアドレス・パスワード）
+     * @return 発行された JWT アクセストークンとトークン種別を含む {@link LoginResponse}（200 OK）
+     */
     @PostMapping("/login")
-    public ResponseEntity<Void> login(@Valid @RequestBody LoginRequest request) {
-        authService.login(new LoginCommand(
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
+        String accessToken = authService.login(new LoginCommand(
                 request.getTenantCode(),
                 request.getEmail(),
                 request.getPassword()
         ));
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(new LoginResponse(accessToken, "Bearer"));
     }
 }

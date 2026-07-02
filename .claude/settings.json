@@ -1,0 +1,21 @@
+{
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
+  "permissions": {
+    "allow": [
+      "Bash(./mvnw test:*)",
+      "Bash(./mvnw clean test:*)",
+      "Bash(./mvnw clean verify:*)",
+      "Bash(./mvnw clean install:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git status:*)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(.env)"
+    ]
+  }
+}

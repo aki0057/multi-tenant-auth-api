@@ -3,6 +3,7 @@ package io.github.aki0057.multitenant.auth.presentation;
 import io.github.aki0057.multitenant.auth.application.AuthService;
 import io.github.aki0057.multitenant.auth.config.PasswordEncoderConfig;
 import io.github.aki0057.multitenant.auth.config.SecurityConfig;
+import io.github.aki0057.multitenant.auth.domain.service.AccessTokenVerifier;
 import io.github.aki0057.multitenant.auth.presentation.advice.GlobalExceptionHandler;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,8 +16,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -31,9 +32,13 @@ class AuthControllerTest {
     @MockitoBean
     private AuthService authService;
 
+    /** SecurityConfig#securityFilterChain が要求する依存を満たすためのモック。 */
+    @MockitoBean
+    private AccessTokenVerifier accessTokenVerifier;
+
     private static final String VALID_REQUEST = """
             {
-              "tenantCode": "test-tenant",
+              "tenantCode": "testTenant",
               "email": "test@example.com",
               "password": "password"
             }
@@ -42,25 +47,27 @@ class AuthControllerTest {
     private static final String INVALID_REQUEST = """
                 {
                   "tenantCode": "",
-                  "email": "not-an-email",
+                  "email": "",
                   "password": ""
                 }
                 """;
 
     @Test
-    @DisplayName("正常系: 正しい認証情報を送信すると 200 OK が返る。")
-    void login_ShouldReturn200Ok() throws Exception {
-        doNothing().when(authService).login(any());
+    @DisplayName("正常系: 正しい認証情報を送信すると 200 OK とアクセストークンが返る。")
+    void login_success() throws Exception {
+        when(authService.login(any())).thenReturn("mock-access-token");
 
         mockMvc.perform(post("/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(VALID_REQUEST))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").value("mock-access-token"))
+                .andExpect(jsonPath("$.tokenType").value("Bearer"));
     }
 
     @Test
     @DisplayName("異常系: ユーザーが存在しない / パスワード不一致の場合は 401 が返る。")
-    void login_ShouldReturn401_WhenCredentialsAreInvalid() throws Exception {
+    void login_invalidCredentials() throws Exception {
         doThrow(new BadCredentialsException("dummy")) // 文字列は何でもよい
                 .when(authService).login(any());
 
@@ -72,7 +79,7 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("異常系: リクエストボディのバリデーション失敗時は 400 が返る。")
-    void login_ShouldReturn400_WhenRequestIsInvalid() throws Exception {
+    void login_invalidRequest() throws Exception {
         mockMvc.perform(post("/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(INVALID_REQUEST))
@@ -81,8 +88,8 @@ class AuthControllerTest {
 
     @Test
     @DisplayName("異常系: 予期しない例外が発生した場合は 500 が返る。")
-    void login_ShouldReturn500_WhenUnexpectedExceptionOccurs() throws Exception {
-        doThrow(new RuntimeException("dummy"))// 文字列は何でもよい
+    void login_unexpectedException() throws Exception {
+        doThrow(new RuntimeException("dummy")) // 文字列は何でもよい
                 .when(authService).login(any());
 
         mockMvc.perform(post("/login")

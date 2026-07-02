@@ -37,14 +37,14 @@ erDiagram
 
 ### users
 
-| カラム名            | 型              | 制約                        | 備考                         |
-|-----------------|----------------|---------------------------|----------------------------|
-| `id`            | `BIGSERIAL`    | PK                        |                            |
-| `tenant_id`     | `BIGINT`       | NOT NULL, FK → tenants.id |                            |
-| `email`         | `VARCHAR(254)` | NOT NULL                  | テナント内で一意（複合UNIQUE）         |
-| `password_hash` | `VARCHAR(255)` | NOT NULL                  | BCryptハッシュ                 |
-| `role`          | `VARCHAR(20)`  | NOT NULL                  | `ROLE_ADMIN` / `ROLE_USER` |
-| `is_active`     | `BOOLEAN`      | NOT NULL, DEFAULT TRUE    | アカウント有効/無効フラグ              |
+| カラム名            | 型              | 制約                        | 備考                 |
+|-----------------|----------------|---------------------------|--------------------|
+| `id`            | `BIGSERIAL`    | PK                        |                    |
+| `tenant_id`     | `BIGINT`       | NOT NULL, FK → tenants.id |                    |
+| `email`         | `VARCHAR(254)` | NOT NULL                  | テナント内で一意（複合UNIQUE） |
+| `password_hash` | `VARCHAR(255)` | NOT NULL                  | BCryptハッシュ         |
+| `role`          | `VARCHAR(20)`  | NOT NULL                  | `ADMIN` / `USER`   |
+| `is_active`     | `BOOLEAN`      | NOT NULL, DEFAULT TRUE    | アカウント有効/無効フラグ      |
 
 - 複合UNIQUE制約：`(tenant_id, email)` — テナントをまたいだ同一メールアドレスは許可する
 

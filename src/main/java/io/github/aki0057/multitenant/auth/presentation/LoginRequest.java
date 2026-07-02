@@ -13,7 +13,6 @@ public class LoginRequest {
     private String tenantCode;
 
     @NotBlank(message = "email は必須です")
-    @Email(message = "email はメールアドレスの形式である必要があります")
     private String email;
 
     @NotBlank(message = "password は必須です")
