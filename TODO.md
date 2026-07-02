@@ -18,7 +18,7 @@
 - [ ] Email
 - [ ] PasswordHash
 - [ ] RawPassword
-- [ ] Role
+- [x] Role
 - [x] TenantCode
 - [x] TenantId
 - [x] UserId

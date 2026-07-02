@@ -54,7 +54,7 @@ VALUES (
            (SELECT id FROM tenants WHERE code = 'testTenant'),
            'test@example.com',
            '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
-           'ROLE_USER',
+           'USER',
            TRUE,
            NOW(), NOW(), 'system', 'system'
        );
