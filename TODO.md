@@ -11,10 +11,11 @@
 ## Service (application)
 
 - [x] AuthService#login(LoginCommand) の JWT アクセストークン発行
-- [ ] AuthService#refresh(RefreshCommand)
+- [x] AuthService#refresh(RefreshCommand)
 
 ## DomainObject (domain)
 - [x] User#authenticate
+- [ ] RefreshToken
 
 ## ValueObject (domain)
 - [x] Email
@@ -24,14 +25,22 @@
 - [x] TenantCode
 - [x] TenantId
 - [x] UserId
+- [ ] RefreshTokenId
+- [ ] TokenHash
+- [ ] RawRefreshToken
 
 ## Repository (domain)
 - [x] findByTenantCodeAndEmail
+- [ ] findById（UserRepository）
+- [ ] RefreshTokenRepository#findByTokenHash
+- [ ] RefreshTokenRepository#save
 
 ## Port (domain)
 - [x] AccessTokenProvider#issue
 - [x] PasswordVerifier#matches
 - [x] AccessTokenVerifier#verify
+- [ ] RefreshTokenGenerator#generate
+- [ ] RefreshTokenHasher#hash
 
 ## infrastructure.mapper
 
@@ -42,3 +51,10 @@
 - [x] StubAccessTokenProvider を jjwt 実装へ置換
 - [x] PasswordEncoderVerifier
 - [x] StubAccessTokenVerifier を JwtAccessTokenVerifier へ置換
+- [ ] StubRefreshTokenGenerator を実装へ置換
+- [ ] StubRefreshTokenHasher を実装へ置換
+
+## infrastructure.persistence
+
+- [ ] StubRefreshTokenRepository を実装へ置換
+- [ ] UserRepositoryImpl#findById を実装

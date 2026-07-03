@@ -1,18 +1,29 @@
 package io.github.aki0057.multitenant.auth.application;
 
 import io.github.aki0057.multitenant.auth.domain.exception.AuthenticationFailedException;
+import io.github.aki0057.multitenant.auth.domain.exception.InvalidRefreshTokenException;
+import io.github.aki0057.multitenant.auth.domain.model.RefreshToken;
 import io.github.aki0057.multitenant.auth.domain.model.User;
 import io.github.aki0057.multitenant.auth.domain.model.vo.Email;
 import io.github.aki0057.multitenant.auth.domain.model.vo.RawPassword;
+import io.github.aki0057.multitenant.auth.domain.model.vo.RawRefreshToken;
 import io.github.aki0057.multitenant.auth.domain.model.vo.TenantCode;
+import io.github.aki0057.multitenant.auth.domain.model.vo.TokenHash;
+import io.github.aki0057.multitenant.auth.domain.repository.RefreshTokenRepository;
 import io.github.aki0057.multitenant.auth.domain.repository.UserRepository;
 import io.github.aki0057.multitenant.auth.domain.service.AccessTokenProvider;
 import io.github.aki0057.multitenant.auth.domain.service.PasswordVerifier;
+import io.github.aki0057.multitenant.auth.domain.service.RefreshTokenGenerator;
+import io.github.aki0057.multitenant.auth.domain.service.RefreshTokenHasher;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
 
 /**
  * 認証ユースケースを担うサービスクラス。
@@ -22,9 +33,16 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class AuthService {
 
+    /** リフレッシュトークンの有効期間。 */
+    private static final Duration REFRESH_TOKEN_EXPIRATION = Duration.ofDays(14);
+
     private final UserRepository userRepository;
     private final PasswordVerifier passwordVerifier;
     private final AccessTokenProvider accessTokenProvider;
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final RefreshTokenGenerator refreshTokenGenerator;
+    private final RefreshTokenHasher refreshTokenHasher;
+    private final Clock clock;
 
     /**
      * ログイン処理。
@@ -75,11 +93,55 @@ public class AuthService {
      * 提示されたリフレッシュトークンを検証し、アクセストークンを再発行するとともに
      * リフレッシュトークンをローテーションする。
      *
+     * <p>提示された生トークンをハッシュ化して該当レコードを検索し、
+     * 失効・期限切れでないこと、所有ユーザーとそのテナントが有効であることを確認する。
+     * 検証成功時は旧トークンを失効させ、新しいトークンを発行・保存する
+     * （旧トークン失効と新トークン保存は同一トランザクションで原子的に行う）。</p>
+     *
+     * <p>トークン不存在・期限切れ・失効済み・ユーザー無効・テナント無効のいずれの場合も、
+     * 原因を外部へ露出させないよう一律に {@link BadCredentialsException}（HTTP 401 相当）へ変換する。</p>
+     *
      * @param command リフレッシュコマンド
      * @return 再発行されたアクセストークンと新しいリフレッシュトークンを含む {@link RefreshResult}
+     * @throws BadCredentialsException リフレッシュトークンが無効（不存在・期限切れ・失効済み・
+     *         ユーザー無効・テナント無効のいずれか）の場合
      */
-    // TODO: リフレッシュトークンの検証・ローテーション・永続化を実装（後続 application 増分）
+    @Transactional
     public RefreshResult refresh(@NonNull RefreshCommand command) {
-        throw new UnsupportedOperationException("AuthService#refresh は未実装です");
+        try {
+            // クライアントから送られたリフレッシュトークンをハッシュ化した値でDBを検索
+            RawRefreshToken rawRefreshToken = new RawRefreshToken(command.refreshToken());
+            TokenHash tokenHash = refreshTokenHasher.hash(rawRefreshToken);
+
+            RefreshToken oldToken = refreshTokenRepository.findByTokenHash(tokenHash)
+                    .orElseThrow(InvalidRefreshTokenException::new);
+
+            Instant now = clock.instant();
+            if (oldToken.revoked() || oldToken.expiresAt().isBefore(now)) {
+                throw new InvalidRefreshTokenException();
+            }
+
+            User user = userRepository.findById(oldToken.userId())
+                    .orElseThrow(InvalidRefreshTokenException::new);
+            if (!user.userIdIsActive() || !user.tenantIdIsActive()) {
+                throw new InvalidRefreshTokenException();
+            }
+
+            // ローテーション: 旧トークンを失効状態で保存する
+            refreshTokenRepository.save(new RefreshToken(
+                    oldToken.id(), oldToken.userId(), oldToken.tokenHash(), oldToken.expiresAt(), true));
+
+            // 新しいトークンを生成・保存する
+            RawRefreshToken newRawToken = refreshTokenGenerator.generate();
+            TokenHash newTokenHash = refreshTokenHasher.hash(newRawToken);
+            refreshTokenRepository.save(new RefreshToken(
+                    null, user.userId(), newTokenHash, now.plus(REFRESH_TOKEN_EXPIRATION), false));
+
+            String accessToken = accessTokenProvider.issue(user);
+            return new RefreshResult(accessToken, newRawToken.value());
+        } catch (InvalidRefreshTokenException e) {
+            // ドメインの検証失敗を、認証 API の共通レスポンス（401）へ変換する
+            throw new BadCredentialsException("Invalid refresh token");
+        }
     }
 }
