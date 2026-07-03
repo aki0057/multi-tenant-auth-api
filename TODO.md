@@ -5,11 +5,13 @@
 ## API (presentation)
 
 - [x] AuthController#login
+- [x] AuthController#refresh
 - [x] JwtAuthenticationFilter#doFilterInternal
 
 ## Service (application)
 
 - [x] AuthService#login(LoginCommand) の JWT アクセストークン発行
+- [ ] AuthService#refresh(RefreshCommand)
 
 ## DomainObject (domain)
 - [x] User#authenticate

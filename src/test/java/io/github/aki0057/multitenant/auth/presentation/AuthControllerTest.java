@@ -1,6 +1,7 @@
 package io.github.aki0057.multitenant.auth.presentation;
 
 import io.github.aki0057.multitenant.auth.application.AuthService;
+import io.github.aki0057.multitenant.auth.application.RefreshResult;
 import io.github.aki0057.multitenant.auth.config.PasswordEncoderConfig;
 import io.github.aki0057.multitenant.auth.config.SecurityConfig;
 import io.github.aki0057.multitenant.auth.domain.service.AccessTokenVerifier;
@@ -52,6 +53,18 @@ class AuthControllerTest {
                 }
                 """;
 
+    private static final String VALID_REFRESH_REQUEST = """
+            {
+              "refreshToken": "valid-refresh-token"
+            }
+            """;
+
+    private static final String INVALID_REFRESH_REQUEST = """
+            {
+              "refreshToken": ""
+            }
+            """;
+
     @Test
     @DisplayName("正常系: 正しい認証情報を送信すると 200 OK とアクセストークンが返る。")
     void login_success() throws Exception {
@@ -96,5 +109,29 @@ class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(VALID_REQUEST))
                 .andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    @DisplayName("正常系: 有効なリフレッシュトークンを送信すると 200 OK と新しいトークン群が返る。")
+    void refresh_success() throws Exception {
+        when(authService.refresh(any()))
+                .thenReturn(new RefreshResult("new-access-token", "new-refresh-token"));
+
+        mockMvc.perform(post("/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(VALID_REFRESH_REQUEST))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").value("new-access-token"))
+                .andExpect(jsonPath("$.refreshToken").value("new-refresh-token"))
+                .andExpect(jsonPath("$.tokenType").value("Bearer"));
+    }
+
+    @Test
+    @DisplayName("異常系: リフレッシュトークンが空の場合はバリデーションに失敗し 400 が返る。")
+    void refresh_invalidRequest() throws Exception {
+        mockMvc.perform(post("/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(INVALID_REFRESH_REQUEST))
+                .andExpect(status().isBadRequest());
     }
 }

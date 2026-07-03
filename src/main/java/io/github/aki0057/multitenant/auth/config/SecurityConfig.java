@@ -49,9 +49,10 @@ public class SecurityConfig {
                         })
                 )
 
+                // TODO: refreshエンドポイントの認可状態は暫定である
                 // エンドポイントの認可設定
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login").permitAll()                          // loginは認証不要
+                        .requestMatchers("/login","/refresh").permitAll()                 // loginは認証不要
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll() // Swaggerは認証不要
                         .anyRequest().authenticated() //規定していないリクエストは全て拒否する
                 )

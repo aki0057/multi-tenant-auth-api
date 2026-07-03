@@ -69,4 +69,17 @@ public class AuthService {
 
         return accessTokenProvider.issue(user);
     }
+
+    /**
+     * リフレッシュ処理。
+     * 提示されたリフレッシュトークンを検証し、アクセストークンを再発行するとともに
+     * リフレッシュトークンをローテーションする。
+     *
+     * @param command リフレッシュコマンド
+     * @return 再発行されたアクセストークンと新しいリフレッシュトークンを含む {@link RefreshResult}
+     */
+    // TODO: リフレッシュトークンの検証・ローテーション・永続化を実装（後続 application 増分）
+    public RefreshResult refresh(@NonNull RefreshCommand command) {
+        throw new UnsupportedOperationException("AuthService#refresh は未実装です");
+    }
 }
