@@ -10,7 +10,7 @@ import java.time.Instant;
  * リフレッシュトークンを表すドメインモデル。
  * JPA エンティティとは分離した純粋な POJO。
  *
- * <p>期限切れ判定（{@link #isExpired(Instant)}）・失効判定（{@link #isRevoked()}）・
+ * <p>使用可能判定（{@link #isValid(Instant)}）・
  * 失効操作（{@link #revoke()}）を提供する。record のため immutable であり、
  * {@link #revoke()} は自身を変更せず失効済みの新しいインスタンスを返す。</p>
  *
@@ -29,22 +29,18 @@ public record RefreshToken(
 ) {
 
     /**
-     * トークンが期限切れかどうかを判定する。
+     * トークンが使用可能かどうかを判定する。
+     *
+     * <p>「リフレッシュトークンが使用可能である」とは、失効済みでなく
+     * （{@code revoked} が {@code false}）、かつ期限切れでない
+     * （{@code expiresAt}）が {@code now} より過去でない状態を指す。
+     * 例外はスローしない。</p>
      *
      * @param now 判定基準となる現在時刻
-     * @return 有効期限（{@code expiresAt}）が {@code now} より過去であれば {@code true}
+     * @return 失効済みでなく、かつ期限切れでない場合は {@code true}
      */
-    public boolean isExpired(Instant now) {
-        return expiresAt.isBefore(now);
-    }
-
-    /**
-     * トークンが失効済みかどうかを判定する。
-     *
-     * @return 失効済み（{@code revoked == true}）であれば {@code true}
-     */
-    public boolean isRevoked() {
-        return revoked;
+    public boolean isValid(Instant now) {
+        return !revoked && !expiresAt.isBefore(now);
     }
 
     /**

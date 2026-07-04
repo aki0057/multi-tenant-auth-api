@@ -32,23 +32,6 @@ class RefreshTokenTest {
     // ---------------------------------------------------------------
     // 正常系
     // ---------------------------------------------------------------
-
-    @Test
-    @DisplayName("正常系: 有効期限が現在時刻より未来の場合、isExpired は false を返す。")
-    void isExpired_notExpired() {
-        RefreshToken token = newToken(NOW.plusSeconds(60), false);
-
-        assertThat(token.isExpired(NOW)).isFalse();
-    }
-
-    @Test
-    @DisplayName("正常系: 未失効（revoked=false）で生成した場合、isRevoked は false を返す。")
-    void isRevoked_notRevoked() {
-        RefreshToken token = newToken(NOW.plusSeconds(60), false);
-
-        assertThat(token.isRevoked()).isFalse();
-    }
-
     @Test
     @DisplayName("正常系: revoke() は revoked=true の新インスタンスを返し、他のフィールドは元の値を引き継ぎ、元のインスタンスは変更されない。")
     void revoke_returnsRevokedInstance() {
@@ -65,23 +48,30 @@ class RefreshTokenTest {
         assertThat(original.revoked()).isFalse();
     }
 
+    @Test
+    @DisplayName("正常系: 未失効（revoked=false）かつ未期限切れ（有効期限が現在時刻より未来）の場合、isValid は true を返す。")
+    void isValid_notRevokedAndNotExpired() {
+        RefreshToken token = newToken(NOW.plusSeconds(60), false);
+
+        assertThat(token.isValid(NOW)).isTrue();
+    }
+
     // ---------------------------------------------------------------
     // 異常系
     // ---------------------------------------------------------------
-
     @Test
-    @DisplayName("異常系: 有効期限が現在時刻より過去の場合、isExpired は true を返す。")
-    void isExpired_expired() {
-        RefreshToken token = newToken(NOW.minusSeconds(60), false);
+    @DisplayName("異常系: 失効済み（revoked=true）の場合、期限切れでなくても isValid は false を返す。")
+    void isValid_revoked() {
+        RefreshToken token = newToken(NOW.plusSeconds(60), true);
 
-        assertThat(token.isExpired(NOW)).isTrue();
+        assertThat(token.isValid(NOW)).isFalse();
     }
 
     @Test
-    @DisplayName("異常系: 失効済み（revoked=true）で生成した場合、isRevoked は true を返す。")
-    void isRevoked_revoked() {
-        RefreshToken token = newToken(NOW.plusSeconds(60), true);
+    @DisplayName("異常系: 期限切れ（有効期限が現在時刻より過去）の場合、未失効でも isValid は false を返す。")
+    void isValid_expired() {
+        RefreshToken token = newToken(NOW.minusSeconds(60), false);
 
-        assertThat(token.isRevoked()).isTrue();
+        assertThat(token.isValid(NOW)).isFalse();
     }
 }

@@ -17,6 +17,7 @@
 - [x] User#authenticate
 - [x] RefreshToken
 - [x] User#isActive
+- [x] RefreshToken#isValid
 
 ## ValueObject (domain)
 - [x] Email

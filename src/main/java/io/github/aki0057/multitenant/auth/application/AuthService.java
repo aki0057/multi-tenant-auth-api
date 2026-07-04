@@ -117,7 +117,7 @@ public class AuthService {
                     .orElseThrow(InvalidRefreshTokenException::new);
 
             Instant now = clock.instant();
-            if (oldToken.revoked() || oldToken.expiresAt().isBefore(now)) {
+            if (!oldToken.isValid(now)) {
                 throw new InvalidRefreshTokenException();
             }
 
@@ -128,8 +128,7 @@ public class AuthService {
             }
 
             // ローテーション: 旧トークンを失効状態で保存する
-            refreshTokenRepository.save(new RefreshToken(
-                    oldToken.id(), oldToken.userId(), oldToken.tokenHash(), oldToken.expiresAt(), true));
+            refreshTokenRepository.save(oldToken.revoke());
 
             // 新しいトークンを生成・保存する
             RawRefreshToken newRawToken = refreshTokenGenerator.generate();
