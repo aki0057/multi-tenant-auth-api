@@ -49,7 +49,6 @@ public class SecurityConfig {
                         })
                 )
 
-                // TODO: refreshエンドポイントの認可状態は暫定である
                 // エンドポイントの認可設定
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/login","/refresh").permitAll()                 // loginは認証不要

@@ -69,6 +69,37 @@ class UserJpaRepositoryTest {
         assertThat(result).isEmpty();
     }
 
+    @Test
+    @DisplayName("正常系: 主キーが一致するユーザーが返る")
+    void findById_found() {
+        TenantJpaEntity tenant = em.persist(buildTenant("tenant-a"));
+        UserJpaEntity user = em.persist(buildUser(tenant, "test@example.com"));
+        em.flush();
+
+        Optional<UserJpaEntity> result = userJpaRepository.findById(user.getId());
+
+        assertThat(result).isPresent();
+        assertThat(result.get().getId()).isEqualTo(user.getId());
+        assertThat(result.get().getEmail()).isEqualTo("test@example.com");
+    }
+
+    // ---------------------------------------------------------------
+    // 異常系
+    // ---------------------------------------------------------------
+
+    @Test
+    @DisplayName("異常系: 存在しない主キーの場合は empty が返る")
+    void findById_notFound() {
+        TenantJpaEntity tenant = em.persist(buildTenant("tenant-a"));
+        em.persist(buildUser(tenant, "test@example.com"));
+        em.flush();
+
+        // 存在しない主キーで検索
+        Optional<UserJpaEntity> result = userJpaRepository.findById(Long.MAX_VALUE);
+
+        assertThat(result).isEmpty();
+    }
+
     // ---------------------------------------------------------------
     // 境界値
     // ---------------------------------------------------------------

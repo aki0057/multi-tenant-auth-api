@@ -35,32 +35,34 @@
 
 ## Repository (domain)
 - [x] findByTenantCodeAndEmail
-- [ ] findById（UserRepository）
-- [ ] RefreshTokenRepository#findByTokenHash
-- [ ] RefreshTokenRepository#save
+- [x] findById（UserRepository）
+- [x] RefreshTokenRepository#findByTokenHash
+- [x] RefreshTokenRepository#save
 
 ## Port (domain)
 - [x] AccessTokenProvider#issue
 - [x] PasswordVerifier#matches
 - [x] AccessTokenVerifier#verify
-- [ ] RefreshTokenGenerator#generate
-- [ ] RefreshTokenHasher#hash
-- [ ] RefreshTokenExpirationPolicy#expiration
+- [x] RefreshTokenGenerator#generate
+- [x] RefreshTokenHasher#hash
+- [x] RefreshTokenExpirationPolicy#expiration
 
 ## infrastructure.mapper
 
 - [x] UserMapper#toDomain(UserJpaEntity)
+- [x] RefreshTokenMapper#toDomain(RefreshTokenJpaEntity)
+- [x] RefreshTokenMapper#toEntity(RefreshToken, TenantJpaEntity, UserJpaEntity)
 
 ## infrastructure.security
 
 - [x] StubAccessTokenProvider を jjwt 実装へ置換
 - [x] PasswordEncoderVerifier
 - [x] StubAccessTokenVerifier を JwtAccessTokenVerifier へ置換
-- [ ] StubRefreshTokenGenerator を実装へ置換
-- [ ] StubRefreshTokenHasher を実装へ置換
-- [ ] StubRefreshTokenExpirationPolicy を実装へ置換
+- [x] StubRefreshTokenGenerator を実装へ置換
+- [x] StubRefreshTokenHasher を実装へ置換
+- [x] StubRefreshTokenExpirationPolicy を実装へ置換
 
 ## infrastructure.persistence
 
-- [ ] StubRefreshTokenRepository を実装へ置換
-- [ ] UserRepositoryImpl#findById を実装
+- [x] StubRefreshTokenRepository を実装へ置換
+- [x] UserRepositoryImpl#findById を実装

@@ -29,15 +29,16 @@ public class UserRepositoryImpl implements UserRepository {
     }
 
     /**
-     * 主キーでユーザーを検索するスタブ実装。
+     * 主キーでユーザーを検索する。
+     * UserJpaRepository の主キー検索に委譲し、UserMapper でドメインモデルへ変換して返す。
      *
      * @param userId ユーザーの主キー
-     * @return なし（常に {@link UnsupportedOperationException} をスローする）
+     * @return 該当するユーザー（存在しない場合は空）
      */
-    // TODO: UserRepositoryImpl#findById を実装（後続 infrastructure 増分）
     @Override
     public Optional<User> findById(UserId userId) {
-        throw new UnsupportedOperationException("UserRepositoryImpl#findById は未実装です");
+        return userJpaRepository.findById(userId.value())
+                .map(userMapper::toDomain);
     }
 }
 

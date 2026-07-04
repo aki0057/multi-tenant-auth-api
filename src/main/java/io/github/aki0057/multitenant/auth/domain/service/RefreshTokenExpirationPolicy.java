@@ -6,7 +6,6 @@ import java.time.Duration;
  * リフレッシュトークンの有効期間を提供するドメインポート。
  * 有効期間の値の取得元（設定プロパティ等）の詳細は infrastructure 層の実装に委ねる。
  */
-// TODO: 実装（後続 infrastructure 増分）
 public interface RefreshTokenExpirationPolicy {
 
     /**

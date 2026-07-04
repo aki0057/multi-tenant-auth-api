@@ -7,7 +7,6 @@ import io.github.aki0057.multitenant.auth.domain.model.vo.TokenHash;
  * 生のリフレッシュトークンをハッシュ化するドメインポート。
  * SHA-256 によるハッシュ計算の詳細は infrastructure 層の実装に委ねる。
  */
-// TODO: 実装（後続 infrastructure 増分）
 public interface RefreshTokenHasher {
 
     /**

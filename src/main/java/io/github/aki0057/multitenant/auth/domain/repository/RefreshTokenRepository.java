@@ -9,7 +9,6 @@ import java.util.Optional;
  * RefreshToken リポジトリのドメインインターフェース。
  * インフラ実装の詳細（JPAなど）に依存しない。
  */
-// TODO: 実装（後続 infrastructure 増分）
 public interface RefreshTokenRepository {
 
     /**
