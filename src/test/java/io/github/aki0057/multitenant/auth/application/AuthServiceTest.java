@@ -163,6 +163,132 @@ class AuthServiceTest {
     }
 
     // ===============================================================
+    // loginWithRefreshToken（Pass 1 一時名メソッド）
+    // ===============================================================
+
+    private static final RawRefreshToken LOGIN_RAW_TOKEN = new RawRefreshToken("login-raw-token");
+    private static final TokenHash LOGIN_TOKEN_HASH = new TokenHash("c".repeat(64));
+
+    // ---------------------------------------------------------------
+    // loginWithRefreshToken 正常系
+    // ---------------------------------------------------------------
+
+    @Test
+    @DisplayName("正常系: 認証に成功した場合、アクセストークンと新規発行のリフレッシュトークンを含む LoginResult を返す。")
+    void loginWithRefreshToken_success() {
+        when(userRepository.findByTenantCodeAndEmail(any(), any()))
+                .thenReturn(Optional.of(activeUser));
+        when(passwordVerifier.matches(any(), any()))
+                .thenReturn(true);
+        when(accessTokenProvider.issue(activeUser))
+                .thenReturn("issued-access-token");
+        when(clock.instant()).thenReturn(FIXED_NOW);
+        when(refreshTokenGenerator.generate()).thenReturn(LOGIN_RAW_TOKEN);
+        when(refreshTokenHasher.hash(LOGIN_RAW_TOKEN)).thenReturn(LOGIN_TOKEN_HASH);
+        when(refreshTokenExpirationPolicy.expiration()).thenReturn(Duration.ofDays(14));
+
+        LoginResult result = authService.loginWithRefreshToken(COMMAND);
+
+        assertThat(result.accessToken()).isEqualTo("issued-access-token");
+        assertThat(result.refreshToken()).isEqualTo("login-raw-token");
+    }
+
+    @Test
+    @DisplayName("正常系: 認証成功時、生成・ハッシュ化した新規リフレッシュトークンが失効なし・null ID で保存される。")
+    void loginWithRefreshToken_savesNewlyIssuedToken() {
+        when(userRepository.findByTenantCodeAndEmail(any(), any()))
+                .thenReturn(Optional.of(activeUser));
+        when(passwordVerifier.matches(any(), any()))
+                .thenReturn(true);
+        when(accessTokenProvider.issue(activeUser))
+                .thenReturn("issued-access-token");
+        when(clock.instant()).thenReturn(FIXED_NOW);
+        when(refreshTokenGenerator.generate()).thenReturn(LOGIN_RAW_TOKEN);
+        when(refreshTokenHasher.hash(LOGIN_RAW_TOKEN)).thenReturn(LOGIN_TOKEN_HASH);
+        when(refreshTokenExpirationPolicy.expiration()).thenReturn(Duration.ofDays(14));
+
+        authService.loginWithRefreshToken(COMMAND);
+
+        ArgumentCaptor<RefreshToken> captor = ArgumentCaptor.forClass(RefreshToken.class);
+        // 新規発行のみ（ローテーションではない）ため保存は 1 回だけ
+        verify(refreshTokenRepository, times(1)).save(captor.capture());
+
+        RefreshToken savedToken = captor.getValue();
+        assertThat(savedToken.id()).isNull();
+        assertThat(savedToken.tenantId()).isEqualTo(activeUser.tenantId());
+        assertThat(savedToken.userId()).isEqualTo(activeUser.userId());
+        assertThat(savedToken.tokenHash()).isEqualTo(LOGIN_TOKEN_HASH);
+        assertThat(savedToken.expiresAt()).isEqualTo(FIXED_NOW.plus(Duration.ofDays(14)));
+        assertThat(savedToken.revoked()).isFalse();
+    }
+
+    // ---------------------------------------------------------------
+    // loginWithRefreshToken 異常系
+    // ---------------------------------------------------------------
+
+    @Test
+    @DisplayName("異常系: ユーザーが存在しない場合は BadCredentialsException がスローされ、トークンは発行・保存されない。")
+    void loginWithRefreshToken_userNotFound() {
+        when(userRepository.findByTenantCodeAndEmail(any(), any()))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> authService.loginWithRefreshToken(COMMAND))
+                .isInstanceOf(BadCredentialsException.class);
+        verify(accessTokenProvider, never()).issue(any());
+        verify(refreshTokenRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("異常系: User の認証が失敗した場合は BadCredentialsException に変換され、トークンは発行・保存されない。")
+    void loginWithRefreshToken_authenticationFailed() {
+        when(userRepository.findByTenantCodeAndEmail(any(), any()))
+                .thenReturn(Optional.of(activeUser));
+        when(passwordVerifier.matches(any(), any()))
+                .thenReturn(false);
+
+        assertThatThrownBy(() -> authService.loginWithRefreshToken(COMMAND))
+                .isInstanceOf(BadCredentialsException.class);
+        verify(accessTokenProvider, never()).issue(any());
+        verify(refreshTokenRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("異常系: tenantCode が形式不正（記号を含む）な場合は BadCredentialsException に変換され、トークンは発行・保存されない。")
+    void loginWithRefreshToken_invalidTenantCodeFormat() {
+        LoginCommand command =
+                new LoginCommand("bad!tenant", "test@example.com", "password");
+
+        assertThatThrownBy(() -> authService.loginWithRefreshToken(command))
+                .isInstanceOf(BadCredentialsException.class);
+        verify(accessTokenProvider, never()).issue(any());
+        verify(refreshTokenRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("異常系: email が形式不正（ドット無し a@b）な場合は BadCredentialsException に変換され、トークンは発行・保存されない。")
+    void loginWithRefreshToken_invalidEmailFormat() {
+        LoginCommand command =
+                new LoginCommand("testTenant", "a@b", "password");
+
+        assertThatThrownBy(() -> authService.loginWithRefreshToken(command))
+                .isInstanceOf(BadCredentialsException.class);
+        verify(accessTokenProvider, never()).issue(any());
+        verify(refreshTokenRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("異常系: password が形式不正（8 文字未満）な場合は BadCredentialsException に変換され、トークンは発行・保存されない。")
+    void loginWithRefreshToken_invalidPasswordFormat() {
+        LoginCommand command =
+                new LoginCommand("testTenant", "test@example.com", "short");
+
+        assertThatThrownBy(() -> authService.loginWithRefreshToken(command))
+                .isInstanceOf(BadCredentialsException.class);
+        verify(accessTokenProvider, never()).issue(any());
+        verify(refreshTokenRepository, never()).save(any());
+    }
+
+    // ===============================================================
     // refresh
     // ===============================================================
 

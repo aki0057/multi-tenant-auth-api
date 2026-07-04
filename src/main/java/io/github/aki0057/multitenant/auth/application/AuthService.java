@@ -87,6 +87,71 @@ public class AuthService {
     }
 
     /**
+     * ログイン処理（アクセストークン＋リフレッシュトークン発行版）。
+     * テナントコード・メールアドレスでユーザーを検索し、認証を行う。
+     * 認証に成功した場合は JWT アクセストークンを発行するとともに、
+     * リフレッシュトークンを<strong>新規発行</strong>して返す。
+     *
+     * <p>リフレッシュトークンは新規発行のみを行う（ローテーションではないため、
+     * 既存トークンの検索・失効は行わない）。生成した生トークンをハッシュ化し、
+     * 有効期限を付与したうえで永続化する。永続化を伴うため
+     * {@link Transactional}（readOnly ではない）で実行する。</p>
+     *
+     * <p>入力値（テナントコード・メールアドレス・パスワード）の形式が不正で
+     * Value Object の生成に失敗した場合も、ユーザー不在・パスワード不一致と同様に
+     * 一律 {@link BadCredentialsException}（HTTP 401 相当）へ変換する。
+     * これにより認証エラーの原因を外部へ露出させない。</p>
+     *
+     * <p>本メソッドは 2 パス移行のための一時名メソッドである。既存の
+     * {@link #login(LoginCommand)} をシムとして温存したまま本実装を追加するために
+     * {@code loginWithRefreshToken} という一時名を用いており、Pass 2 で
+     * {@code login} へ統合・リネームされ消滅する予定である。</p>
+     *
+     * @param command ログインコマンド
+     * @return 発行されたアクセストークンと新規発行されたリフレッシュトークンを含む {@link LoginResult}
+     * @throws BadCredentialsException 入力値の形式が不正（テナントコード / メールアドレス /
+     *         パスワードが Value Object の検証に失敗）の場合、
+     *         またはユーザーが存在しない / パスワード不一致 / アカウント無効の場合
+     */
+    @Transactional
+    public LoginResult loginWithRefreshToken(@NonNull LoginCommand command) {
+        final TenantCode tenantCode;
+        final Email email;
+        final RawPassword rawPassword;
+        try {
+            tenantCode = new TenantCode(command.tenantCode());
+            email = new Email(command.email());
+            rawPassword = new RawPassword(command.password());
+        } catch (IllegalArgumentException e) {
+            // VO の形式検証失敗を、認証 API の共通レスポンス（401）へ変換する
+            throw new BadCredentialsException("Invalid credentials");
+        }
+
+        User user = userRepository
+                .findByTenantCodeAndEmail(tenantCode, email)
+                .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
+
+        try {
+            user.authenticate(rawPassword, passwordVerifier);
+        } catch (AuthenticationFailedException e) {
+            // ドメインの認証失敗を、認証 API の共通レスポンスへ変換する
+            throw new BadCredentialsException("Invalid credentials");
+        }
+
+        String accessToken = accessTokenProvider.issue(user);
+
+        // リフレッシュトークンを新規発行（ローテーションではない）・ハッシュ化・保存する
+        Instant now = clock.instant();
+        RawRefreshToken rawRefreshToken = refreshTokenGenerator.generate();
+        TokenHash tokenHash = refreshTokenHasher.hash(rawRefreshToken);
+        refreshTokenRepository.save(new RefreshToken(
+                null, user.tenantId(), user.userId(), tokenHash,
+                now.plus(refreshTokenExpirationPolicy.expiration()), false));
+
+        return new LoginResult(accessToken, rawRefreshToken.value());
+    }
+
+    /**
      * リフレッシュ処理。
      * 提示されたリフレッシュトークンを検証し、アクセストークンを再発行するとともに
      * リフレッシュトークンをローテーションする。
