@@ -123,7 +123,7 @@ public class AuthService {
 
             User user = userRepository.findById(oldToken.userId())
                     .orElseThrow(InvalidRefreshTokenException::new);
-            if (!user.userIdIsActive() || !user.tenantIdIsActive()) {
+            if (!user.isActive()) {
                 throw new InvalidRefreshTokenException();
             }
 
