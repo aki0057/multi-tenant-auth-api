@@ -1,6 +1,7 @@
 package io.github.aki0057.multitenant.auth.domain.model;
 
 import io.github.aki0057.multitenant.auth.domain.model.vo.RefreshTokenId;
+import io.github.aki0057.multitenant.auth.domain.model.vo.TenantId;
 import io.github.aki0057.multitenant.auth.domain.model.vo.TokenHash;
 import io.github.aki0057.multitenant.auth.domain.model.vo.UserId;
 import org.junit.jupiter.api.DisplayName;
@@ -22,6 +23,7 @@ class RefreshTokenTest {
     private RefreshToken newToken(Instant expiresAt, boolean revoked) {
         return new RefreshToken(
                 new RefreshTokenId(1L),
+                new TenantId(1L),
                 new UserId(1L),
                 new TokenHash(VALID_HASH),
                 expiresAt,
@@ -41,6 +43,7 @@ class RefreshTokenTest {
 
         assertThat(revoked.revoked()).isTrue();
         assertThat(revoked.id()).isEqualTo(original.id());
+        assertThat(revoked.tenantId()).isEqualTo(original.tenantId());
         assertThat(revoked.userId()).isEqualTo(original.userId());
         assertThat(revoked.tokenHash()).isEqualTo(original.tokenHash());
         assertThat(revoked.expiresAt()).isEqualTo(original.expiresAt());

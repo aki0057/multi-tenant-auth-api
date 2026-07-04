@@ -13,6 +13,7 @@ import io.github.aki0057.multitenant.auth.domain.repository.RefreshTokenReposito
 import io.github.aki0057.multitenant.auth.domain.repository.UserRepository;
 import io.github.aki0057.multitenant.auth.domain.service.AccessTokenProvider;
 import io.github.aki0057.multitenant.auth.domain.service.PasswordVerifier;
+import io.github.aki0057.multitenant.auth.domain.service.RefreshTokenExpirationPolicy;
 import io.github.aki0057.multitenant.auth.domain.service.RefreshTokenGenerator;
 import io.github.aki0057.multitenant.auth.domain.service.RefreshTokenHasher;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +23,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
-import java.time.Duration;
 import java.time.Instant;
 
 /**
@@ -33,15 +33,13 @@ import java.time.Instant;
 @RequiredArgsConstructor
 public class AuthService {
 
-    /** リフレッシュトークンの有効期間。 */
-    private static final Duration REFRESH_TOKEN_EXPIRATION = Duration.ofDays(14);
-
     private final UserRepository userRepository;
     private final PasswordVerifier passwordVerifier;
     private final AccessTokenProvider accessTokenProvider;
     private final RefreshTokenRepository refreshTokenRepository;
     private final RefreshTokenGenerator refreshTokenGenerator;
     private final RefreshTokenHasher refreshTokenHasher;
+    private final RefreshTokenExpirationPolicy refreshTokenExpirationPolicy;
     private final Clock clock;
 
     /**
@@ -134,7 +132,8 @@ public class AuthService {
             RawRefreshToken newRawToken = refreshTokenGenerator.generate();
             TokenHash newTokenHash = refreshTokenHasher.hash(newRawToken);
             refreshTokenRepository.save(new RefreshToken(
-                    null, user.userId(), newTokenHash, now.plus(REFRESH_TOKEN_EXPIRATION), false));
+                    null, user.tenantId(), user.userId(), newTokenHash,
+                    now.plus(refreshTokenExpirationPolicy.expiration()), false));
 
             String accessToken = accessTokenProvider.issue(user);
             return new RefreshResult(accessToken, newRawToken.value());

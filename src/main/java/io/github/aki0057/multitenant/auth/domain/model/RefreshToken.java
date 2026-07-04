@@ -1,6 +1,7 @@
 package io.github.aki0057.multitenant.auth.domain.model;
 
 import io.github.aki0057.multitenant.auth.domain.model.vo.RefreshTokenId;
+import io.github.aki0057.multitenant.auth.domain.model.vo.TenantId;
 import io.github.aki0057.multitenant.auth.domain.model.vo.TokenHash;
 import io.github.aki0057.multitenant.auth.domain.model.vo.UserId;
 
@@ -15,6 +16,7 @@ import java.time.Instant;
  * {@link #revoke()} は自身を変更せず失効済みの新しいインスタンスを返す。</p>
  *
  * @param id        リフレッシュトークンの主キー（未永続化の場合は {@code null}）
+ * @param tenantId  トークンの所有ユーザーが属するテナントの主キー
  * @param userId    トークンの所有ユーザーの主キー
  * @param tokenHash 生トークンの SHA-256 ハッシュ値
  * @param expiresAt トークンの有効期限
@@ -22,6 +24,7 @@ import java.time.Instant;
  */
 public record RefreshToken(
         RefreshTokenId id,
+        TenantId tenantId,
         UserId userId,
         TokenHash tokenHash,
         Instant expiresAt,
@@ -47,12 +50,12 @@ public record RefreshToken(
      * トークンを失効させる。
      *
      * <p>record のため自身の状態は変更せず、{@code revoked = true} とした
-     * 新しいインスタンスを返す。他のフィールド（{@code id} / {@code userId} /
-     * {@code tokenHash} / {@code expiresAt}）は元の値をそのまま引き継ぐ。</p>
+     * 新しいインスタンスを返す。他のフィールド（{@code id} / {@code tenantId} /
+     * {@code userId} / {@code tokenHash} / {@code expiresAt}）は元の値をそのまま引き継ぐ。</p>
      *
      * @return 失効済み（{@code revoked = true}）の新しい {@code RefreshToken} インスタンス
      */
     public RefreshToken revoke() {
-        return new RefreshToken(id, userId, tokenHash, expiresAt, true);
+        return new RefreshToken(id, tenantId, userId, tokenHash, expiresAt, true);
     }
 }

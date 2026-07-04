@@ -45,6 +45,7 @@
 - [x] AccessTokenVerifier#verify
 - [ ] RefreshTokenGenerator#generate
 - [ ] RefreshTokenHasher#hash
+- [ ] RefreshTokenExpirationPolicy#expiration
 
 ## infrastructure.mapper
 
@@ -57,6 +58,7 @@
 - [x] StubAccessTokenVerifier を JwtAccessTokenVerifier へ置換
 - [ ] StubRefreshTokenGenerator を実装へ置換
 - [ ] StubRefreshTokenHasher を実装へ置換
+- [ ] StubRefreshTokenExpirationPolicy を実装へ置換
 
 ## infrastructure.persistence
 

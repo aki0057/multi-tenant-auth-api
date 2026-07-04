@@ -7,6 +7,7 @@ import io.github.aki0057.multitenant.auth.domain.repository.RefreshTokenReposito
 import io.github.aki0057.multitenant.auth.domain.repository.UserRepository;
 import io.github.aki0057.multitenant.auth.domain.service.AccessTokenProvider;
 import io.github.aki0057.multitenant.auth.domain.service.PasswordVerifier;
+import io.github.aki0057.multitenant.auth.domain.service.RefreshTokenExpirationPolicy;
 import io.github.aki0057.multitenant.auth.domain.service.RefreshTokenGenerator;
 import io.github.aki0057.multitenant.auth.domain.service.RefreshTokenHasher;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,6 +53,9 @@ class AuthServiceTest {
 
     @Mock
     private RefreshTokenHasher refreshTokenHasher;
+
+    @Mock
+    private RefreshTokenExpirationPolicy refreshTokenExpirationPolicy;
 
     @Mock
     private Clock clock;
@@ -178,6 +182,7 @@ class AuthServiceTest {
     private RefreshToken validOldToken() {
         return new RefreshToken(
                 new RefreshTokenId(10L),
+                new TenantId(1L),
                 new UserId(1L),
                 OLD_TOKEN_HASH,
                 FIXED_NOW.plus(Duration.ofDays(1)),
@@ -200,6 +205,7 @@ class AuthServiceTest {
                 .thenReturn(Optional.of(activeUser));
         when(refreshTokenGenerator.generate()).thenReturn(NEW_RAW_TOKEN);
         when(refreshTokenHasher.hash(NEW_RAW_TOKEN)).thenReturn(NEW_TOKEN_HASH);
+        when(refreshTokenExpirationPolicy.expiration()).thenReturn(Duration.ofDays(14));
         when(accessTokenProvider.issue(activeUser)).thenReturn("new-access-token");
 
         RefreshResult result = authService.refresh(REFRESH_COMMAND);
@@ -219,6 +225,7 @@ class AuthServiceTest {
 
         RefreshToken savedNewToken = captor.getAllValues().get(1);
         assertThat(savedNewToken.id()).isNull();
+        assertThat(savedNewToken.tenantId()).isEqualTo(activeUser.tenantId());
         assertThat(savedNewToken.userId()).isEqualTo(new UserId(1L));
         assertThat(savedNewToken.tokenHash()).isEqualTo(NEW_TOKEN_HASH);
         assertThat(savedNewToken.expiresAt()).isEqualTo(FIXED_NOW.plus(Duration.ofDays(14)));
@@ -246,6 +253,7 @@ class AuthServiceTest {
     void refresh_tokenRevoked() {
         RefreshToken revokedToken = new RefreshToken(
                 new RefreshTokenId(10L),
+                new TenantId(1L),
                 new UserId(1L),
                 OLD_TOKEN_HASH,
                 FIXED_NOW.plus(Duration.ofDays(1)),
@@ -266,6 +274,7 @@ class AuthServiceTest {
     void refresh_tokenExpired() {
         RefreshToken expiredToken = new RefreshToken(
                 new RefreshTokenId(10L),
+                new TenantId(1L),
                 new UserId(1L),
                 OLD_TOKEN_HASH,
                 FIXED_NOW.minus(Duration.ofSeconds(1)),
