@@ -168,9 +168,9 @@ class AuthServiceTest {
             new RefreshCommand("old-raw-token");
 
     private static final RawRefreshToken OLD_RAW_TOKEN = new RawRefreshToken("old-raw-token");
-    private static final TokenHash OLD_TOKEN_HASH = new TokenHash("old-token-hash");
+    private static final TokenHash OLD_TOKEN_HASH = new TokenHash("a".repeat(64));
     private static final RawRefreshToken NEW_RAW_TOKEN = new RawRefreshToken("new-raw-token");
-    private static final TokenHash NEW_TOKEN_HASH = new TokenHash("new-token-hash");
+    private static final TokenHash NEW_TOKEN_HASH = new TokenHash("b".repeat(64));
 
     /**
      * 未失効・未期限切れの有効な旧リフレッシュトークンを生成する。

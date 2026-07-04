@@ -15,7 +15,7 @@
 
 ## DomainObject (domain)
 - [x] User#authenticate
-- [ ] RefreshToken
+- [x] RefreshToken
 
 ## ValueObject (domain)
 - [x] Email
@@ -25,9 +25,9 @@
 - [x] TenantCode
 - [x] TenantId
 - [x] UserId
-- [ ] RefreshTokenId
-- [ ] TokenHash
-- [ ] RawRefreshToken
+- [x] RefreshTokenId
+- [x] TokenHash
+- [x] RawRefreshToken
 
 ## Repository (domain)
 - [x] findByTenantCodeAndEmail
