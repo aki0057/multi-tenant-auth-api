@@ -30,6 +30,8 @@
 - [x] RefreshTokenId
 - [x] TokenHash
 - [x] RawRefreshToken
+- [x] RawRefreshToken#toString
+- [x] RawPassword#toString
 
 ## Repository (domain)
 - [x] findByTenantCodeAndEmail

@@ -1,5 +1,7 @@
 package io.github.aki0057.multitenant.auth.domain.model.vo;
 
+import org.jspecify.annotations.NonNull;
+
 /**
  * クライアントへ渡す生のリフレッシュトークン文字列を表す Value Object。
  *
@@ -28,5 +30,20 @@ public record RawRefreshToken(String value) {
         if (value.isBlank()) {
             throw new IllegalArgumentException("RawRefreshToken は空欄にできません。");
         }
+    }
+
+    /**
+     * 値を含まないマスキング済み固定文字列を返す。
+     *
+     * <p>record の自動生成 {@code toString()} は生のリフレッシュトークンをそのまま含むため、
+     * ログ出力・例外メッセージ・デバッガ表示などを通じて機密値が流出するリスクがある。
+     * これを防ぐためにオーバーライドし、常に値を含まない固定文字列を返す。</p>
+     *
+     * @return マスキング済み固定文字列 {@code "RawRefreshToken[masked]"}
+     */
+    @Override
+    @NonNull
+    public String toString() {
+        return "RawRefreshToken[masked]";
     }
 }

@@ -78,4 +78,14 @@ public class RawPasswordTest {
         assertThatThrownBy(() -> new RawPassword("pass word123"))
                 .isInstanceOf(IllegalArgumentException.class);
     }
+
+    @Test
+    @DisplayName("正常系: toString() の戻り値が生成に使った元の文字列と等しくない。")
+    void toString_masked() {
+        String value = "password123";
+
+        RawPassword rawPassword = new RawPassword(value);
+
+        assertThat(rawPassword.toString()).isNotEqualTo(value);
+    }
 }

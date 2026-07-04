@@ -39,4 +39,14 @@ public class RawRefreshTokenTest {
         assertThatThrownBy(() -> new RawRefreshToken("        "))
                 .isInstanceOf(IllegalArgumentException.class);
     }
+
+    @Test
+    @DisplayName("正常系: toString() の戻り値が生成に使った元の文字列と等しくない。")
+    void toString_masked() {
+        String value = "raw-refresh-token-value";
+
+        RawRefreshToken rawRefreshToken = new RawRefreshToken(value);
+
+        assertThat(rawRefreshToken.toString()).isNotEqualTo(value);
+    }
 }
