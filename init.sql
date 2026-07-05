@@ -43,29 +43,29 @@ CREATE TABLE refresh_tokens (
 -- ============================================================
 -- テストデータ
 -- ============================================================
+--
+-- 全ユーザー共通パスワード: "password"
+--   password_hash は "password" を BCrypt（$2a$, cost 10）でハッシュ化した実値。
+--   Spring Security の BCryptPasswordEncoder で検証可能。
+-- テナントコードは TenantCode VO（^[a-zA-Z0-9]+$）に適合させる（ハイフン不可）。
+-- role は Role VO の許容値（USER / ADMIN）のみ。
+-- リフレッシュトークンはシードしない（/login から開始する想定）。
 
--- 1. テナント（users より先に INSERT する必要がある）
+-- 1. テナント 2 件（users より先に INSERT する必要がある）
 INSERT INTO tenants (code, name, is_active, created_at, updated_at, created_by, updated_by)
-VALUES ('testTenant', 'テストテナント', TRUE, NOW(), NOW(), 'system', 'system');
+VALUES
+    ('testTenant', 'テストテナントA', TRUE, NOW(), NOW(), 'system', 'system'),
+    ('demoTenant', 'テストテナントB', TRUE, NOW(), NOW(), 'system', 'system');
 
--- 2. ユーザー（password: "password" を BCrypt でハッシュ化した値）
+-- 2. ユーザー（各テナント 3 名 = USER 2 名 + ADMIN 1 名）
+--    同一メールを両テナントに配置し、UNIQUE(tenant_id, email) によるテナント分離を体現する。
 INSERT INTO users (tenant_id, email, password_hash, role, is_active, created_at, updated_at, created_by, updated_by)
-VALUES (
-           (SELECT id FROM tenants WHERE code = 'testTenant'),
-           'test@example.com',
-           '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
-           'USER',
-           TRUE,
-           NOW(), NOW(), 'system', 'system'
-       );
-
--- 3. リフレッシュトークン（生トークン: "test-refresh-token" を SHA-256 でハッシュ化した値）
-INSERT INTO refresh_tokens (tenant_id, user_id, token_hash, expires_at, is_revoked, created_at, updated_at, created_by, updated_by)
-VALUES (
-           (SELECT id FROM tenants WHERE code = 'testTenant'),
-           (SELECT id FROM users WHERE email = 'test@example.com'),
-           'a0d4b6e8f2c14e6a8b0d2f4a6e8c0b2d4f6a8e0c2b4d6f8a0e2c4b6d8f0a2e4',
-           NOW() + INTERVAL '7 days',
-           FALSE,
-           NOW(), NOW(), 'system', 'system'
-       );
+VALUES
+    -- testTenant
+    ((SELECT id FROM tenants WHERE code = 'testTenant'), 'user1@example.com', '$2a$10$5AA3ksnyeVAshGO4HN5s/.Op0ygx.ahglEi.Di5BI3xSTfjSJWazC', 'USER',  TRUE, NOW(), NOW(), 'system', 'system'),
+    ((SELECT id FROM tenants WHERE code = 'testTenant'), 'user2@example.com', '$2a$10$5AA3ksnyeVAshGO4HN5s/.Op0ygx.ahglEi.Di5BI3xSTfjSJWazC', 'USER',  TRUE, NOW(), NOW(), 'system', 'system'),
+    ((SELECT id FROM tenants WHERE code = 'testTenant'), 'admin10@example.com', '$2a$10$5AA3ksnyeVAshGO4HN5s/.Op0ygx.ahglEi.Di5BI3xSTfjSJWazC', 'ADMIN', TRUE, NOW(), NOW(), 'system', 'system'),
+    -- demoTenant
+    ((SELECT id FROM tenants WHERE code = 'demoTenant'), 'user1@example.com', '$2a$10$5AA3ksnyeVAshGO4HN5s/.Op0ygx.ahglEi.Di5BI3xSTfjSJWazC', 'USER',  TRUE, NOW(), NOW(), 'system', 'system'),
+    ((SELECT id FROM tenants WHERE code = 'demoTenant'), 'user3@example.com', '$2a$10$5AA3ksnyeVAshGO4HN5s/.Op0ygx.ahglEi.Di5BI3xSTfjSJWazC', 'USER',  TRUE, NOW(), NOW(), 'system', 'system'),
+    ((SELECT id FROM tenants WHERE code = 'demoTenant'), 'admin20@example.com', '$2a$10$5AA3ksnyeVAshGO4HN5s/.Op0ygx.ahglEi.Di5BI3xSTfjSJWazC', 'ADMIN', TRUE, NOW(), NOW(), 'system', 'system');
