@@ -10,7 +10,7 @@
 
 ## Service (application)
 
-- [x] AuthService#login(LoginCommand) の JWT アクセストークン発行
+- [x] AuthService#login(LoginCommand) の JWT アクセストークン＋リフレッシュトークン発行
 - [x] AuthService#refresh(RefreshCommand)
 
 ## DomainObject (domain)

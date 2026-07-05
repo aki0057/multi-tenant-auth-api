@@ -1,6 +1,7 @@
 package io.github.aki0057.multitenant.auth.presentation;
 
 import io.github.aki0057.multitenant.auth.application.AuthService;
+import io.github.aki0057.multitenant.auth.application.LoginResult;
 import io.github.aki0057.multitenant.auth.application.RefreshResult;
 import io.github.aki0057.multitenant.auth.config.PasswordEncoderConfig;
 import io.github.aki0057.multitenant.auth.config.SecurityConfig;
@@ -66,15 +67,17 @@ class AuthControllerTest {
             """;
 
     @Test
-    @DisplayName("正常系: 正しい認証情報を送信すると 200 OK とアクセストークンが返る。")
+    @DisplayName("正常系: 正しい認証情報を送信すると 200 OK とアクセストークン・リフレッシュトークンが返る。")
     void login_success() throws Exception {
-        when(authService.login(any())).thenReturn("mock-access-token");
+        when(authService.login(any()))
+                .thenReturn(new LoginResult("mock-access-token", "mock-refresh-token"));
 
         mockMvc.perform(post("/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(VALID_REQUEST))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").value("mock-access-token"))
+                .andExpect(jsonPath("$.refreshToken").value("mock-refresh-token"))
                 .andExpect(jsonPath("$.tokenType").value("Bearer"));
     }
 
