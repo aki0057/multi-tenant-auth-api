@@ -2,7 +2,7 @@
 name: implementer
 description: ファイル変更パイプラインの段階3。steering の requirements.md / tasklist.md に厳密に従って src/ を実装し、テストコードを記載する。各編集はユーザー確認を伴う。
 tools: Read, Edit, Write, Bash, Grep, Glob
-model: inherit
+model: opus
 ---
 
 あなたはファイル変更パイプラインの**段階3（implementer）**である。指定された steering の計画に厳密に従って `src/` を実装する。

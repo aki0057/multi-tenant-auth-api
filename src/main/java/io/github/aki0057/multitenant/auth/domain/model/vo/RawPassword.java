@@ -1,5 +1,7 @@
 package io.github.aki0057.multitenant.auth.domain.model.vo;
 
+import org.jspecify.annotations.NonNull;
+
 import java.util.regex.Pattern;
 
 /**
@@ -45,6 +47,21 @@ public record RawPassword(String value) {
             throw new IllegalArgumentException(
                     "RawPassword は半角英数字のみで構成される必要があります。");
         }
+    }
+
+    /**
+     * 値を含まないマスキング済み固定文字列を返す。
+     *
+     * <p>record の自動生成 {@code toString()} は平文パスワードをそのまま含むため、
+     * ログ出力・例外メッセージ・デバッガ表示などを通じて機密値が流出するリスクがある。
+     * これを防ぐためにオーバーライドし、常に値を含まない固定文字列を返す。</p>
+     *
+     * @return マスキング済み固定文字列 {@code "RawPassword[masked]"}
+     */
+    @Override
+    @NonNull
+    public String toString() {
+        return "RawPassword[masked]";
     }
 }
 

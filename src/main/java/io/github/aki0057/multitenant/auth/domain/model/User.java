@@ -20,8 +20,19 @@ public record User(
 ) {
 
     /**
+     * このユーザーが有効かを判定する。
+     * 「有効なユーザー」とは、ユーザー自身が有効（{@code userIdIsActive}）かつ
+     * 所属テナントも有効（{@code tenantIdIsActive}）であることを指す。
+     *
+     * @return ユーザー自身と所属テナントの両方が有効な場合は {@code true}、それ以外は {@code false}
+     */
+    public boolean isActive() {
+        return userIdIsActive && tenantIdIsActive;
+    }
+
+    /**
      * このユーザーが認証可能かを検証する。
-     * アカウント有効性・テナント有効性・パスワード一致をこの順に確認し、
+     * ユーザーの有効性（{@link #isActive()}）・パスワード一致をこの順に確認し、
      * いずれかを満たさない場合は {@link AuthenticationFailedException} をスローする。
      *
      * @param rawPassword      照合する生パスワード
@@ -29,10 +40,7 @@ public record User(
      * @throws AuthenticationFailedException アカウント無効・テナント無効・パスワード不一致のいずれかの場合
      */
     public void authenticate(RawPassword rawPassword, PasswordVerifier passwordVerifier) {
-        if (!userIdIsActive) {
-            throw new AuthenticationFailedException();
-        }
-        if (!tenantIdIsActive) {
+        if (!isActive()) {
             throw new AuthenticationFailedException();
         }
         if (!passwordVerifier.matches(rawPassword, passwordHash)) {

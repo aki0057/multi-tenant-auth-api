@@ -43,13 +43,16 @@ class JwtAccessTokenVerifierTest {
 
     private static final Duration EXPIRATION = Duration.ofMinutes(15);
 
+    /** 当該テストでは使用しないが、record の必須コンポーネントのため設定する。 */
+    private static final Duration REFRESH_EXPIRATION = Duration.ofDays(14);
+
     private JwtProperties properties;
     private JwtAccessTokenProvider provider;
     private JwtAccessTokenVerifier verifier;
 
     @BeforeEach
     void setUp() {
-        properties = new JwtProperties(SECRET, EXPIRATION);
+        properties = new JwtProperties(SECRET, EXPIRATION, REFRESH_EXPIRATION);
         provider = new JwtAccessTokenProvider(properties);
         verifier = new JwtAccessTokenVerifier(properties);
     }

@@ -17,6 +17,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -55,7 +57,7 @@ class LoginIntegrationTest {
     }
 
     @Test
-    @DisplayName("正常系: 正しい tenantCode + email + password を送信すると 200 OK が返る")
+    @DisplayName("正常系: 正しい tenantCode + email + password を送信すると 200 OK・アクセストークンが返り、リフレッシュトークンは Cookie で返る")
     void login_withValidCredentials_returns200() throws Exception {
         mockMvc.perform(post("/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -66,7 +68,14 @@ class LoginIntegrationTest {
                                   "password": "password"
                                 }
                                 """))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.tokenType").value("Bearer"))
+                // リフレッシュトークンは JSON ボディには含めず、Set-Cookie で返す
+                .andExpect(jsonPath("$.refreshToken").doesNotExist())
+                .andExpect(cookie().exists("refreshToken"))
+                .andExpect(cookie().httpOnly("refreshToken", true))
+                .andExpect(cookie().path("refreshToken", "/refresh"));
     }
 
     @Test

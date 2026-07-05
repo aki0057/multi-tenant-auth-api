@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestCookieException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -28,6 +29,17 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
                 .body(Map.of("error", "Invalid credentials"));
+    }
+
+    /**
+     * リフレッシュトークン Cookie の未送付（{@code @CookieValue} の欠落）→ 401 Unauthorized。
+     * Cookie 方式のリフレッシュでトークンが提示されない場合を、500 ではなく認証失敗として扱う。
+     */
+    @ExceptionHandler(MissingRequestCookieException.class)
+    public ResponseEntity<Map<String, String>> handleMissingCookie(MissingRequestCookieException e) {
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("error", "Missing refresh token"));
     }
 
     /**

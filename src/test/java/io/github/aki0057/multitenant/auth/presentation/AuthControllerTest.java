@@ -1,10 +1,13 @@
 package io.github.aki0057.multitenant.auth.presentation;
 
 import io.github.aki0057.multitenant.auth.application.AuthService;
+import io.github.aki0057.multitenant.auth.application.LoginResult;
+import io.github.aki0057.multitenant.auth.application.RefreshResult;
 import io.github.aki0057.multitenant.auth.config.PasswordEncoderConfig;
 import io.github.aki0057.multitenant.auth.config.SecurityConfig;
 import io.github.aki0057.multitenant.auth.domain.service.AccessTokenVerifier;
 import io.github.aki0057.multitenant.auth.presentation.advice.GlobalExceptionHandler;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +21,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -32,7 +37,7 @@ class AuthControllerTest {
     @MockitoBean
     private AuthService authService;
 
-    /** SecurityConfig#securityFilterChain が要求する依存を満たすためのモック。 */
+    /** SecurityConfig#defaultSecurityFilterChain が要求する依存を満たすためのモック。 */
     @MockitoBean
     private AccessTokenVerifier accessTokenVerifier;
 
@@ -53,16 +58,38 @@ class AuthControllerTest {
                 """;
 
     @Test
-    @DisplayName("正常系: 正しい認証情報を送信すると 200 OK とアクセストークンが返る。")
+    @DisplayName("正常系: 正しい認証情報を送信すると 200 OK・アクセストークンが返り、リフレッシュトークンは Cookie で返る。")
     void login_success() throws Exception {
-        when(authService.login(any())).thenReturn("mock-access-token");
+        when(authService.login(any()))
+                .thenReturn(new LoginResult("mock-access-token", "mock-refresh-token"));
 
         mockMvc.perform(post("/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(VALID_REQUEST))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").value("mock-access-token"))
-                .andExpect(jsonPath("$.tokenType").value("Bearer"));
+                .andExpect(jsonPath("$.tokenType").value("Bearer"))
+                // リフレッシュトークンは JSON ボディに含めない
+                .andExpect(jsonPath("$.refreshToken").doesNotExist())
+                // リフレッシュトークンは属性付きの Set-Cookie で返る
+                .andExpect(cookie().value("refreshToken", "mock-refresh-token"))
+                .andExpect(cookie().httpOnly("refreshToken", true))
+                .andExpect(cookie().secure("refreshToken", true))
+                .andExpect(cookie().path("refreshToken", "/refresh"))
+                .andExpect(cookie().sameSite("refreshToken", "Strict"));
+    }
+
+    @Test
+    @DisplayName("正常系: login レスポンスの Set-Cookie に XSRF-TOKEN が発行される（後続 /refresh の鶏卵問題回避）。")
+    void login_issuesXsrfTokenCookie() throws Exception {
+        when(authService.login(any()))
+                .thenReturn(new LoginResult("mock-access-token", "mock-refresh-token"));
+
+        mockMvc.perform(post("/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(VALID_REQUEST))
+                .andExpect(status().isOk())
+                .andExpect(cookie().exists("XSRF-TOKEN"));
     }
 
     @Test
@@ -96,5 +123,43 @@ class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(VALID_REQUEST))
                 .andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    @DisplayName("正常系: Cookie のリフレッシュトークンを送信すると 200 OK・アクセストークンが返り、新トークンが Cookie で返る。")
+    void refresh_success() throws Exception {
+        when(authService.refresh(any()))
+                .thenReturn(new RefreshResult("new-access-token", "new-refresh-token"));
+
+        mockMvc.perform(post("/refresh")
+                        .cookie(new Cookie("refreshToken", "old-refresh-token"))
+                        .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").value("new-access-token"))
+                .andExpect(jsonPath("$.tokenType").value("Bearer"))
+                // リフレッシュトークンは JSON ボディに含めない
+                .andExpect(jsonPath("$.refreshToken").doesNotExist())
+                // ローテーション後トークンは属性付きの Set-Cookie で返る
+                .andExpect(cookie().value("refreshToken", "new-refresh-token"))
+                .andExpect(cookie().httpOnly("refreshToken", true))
+                .andExpect(cookie().secure("refreshToken", true))
+                .andExpect(cookie().path("refreshToken", "/refresh"))
+                .andExpect(cookie().sameSite("refreshToken", "Strict"));
+    }
+
+    @Test
+    @DisplayName("異常系: refreshToken Cookie 未送付時は 401 が返る（500 にしない）。")
+    void refresh_missingCookie() throws Exception {
+        mockMvc.perform(post("/refresh")
+                        .with(csrf()))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("異常系: CSRF トークン（X-XSRF-TOKEN）なしで /refresh へ POST すると 403 が返る。")
+    void refresh_missingCsrfToken() throws Exception {
+        mockMvc.perform(post("/refresh")
+                        .cookie(new Cookie("refreshToken", "old-refresh-token")))
+                .andExpect(status().isForbidden());
     }
 }

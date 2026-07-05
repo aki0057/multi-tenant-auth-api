@@ -5,14 +5,19 @@
 ## API (presentation)
 
 - [x] AuthController#login
+- [x] AuthController#refresh
 - [x] JwtAuthenticationFilter#doFilterInternal
 
 ## Service (application)
 
-- [x] AuthService#login(LoginCommand) の JWT アクセストークン発行
+- [x] AuthService#login(LoginCommand) の JWT アクセストークン＋リフレッシュトークン発行
+- [x] AuthService#refresh(RefreshCommand)
 
 ## DomainObject (domain)
 - [x] User#authenticate
+- [x] RefreshToken
+- [x] User#isActive
+- [x] RefreshToken#isValid
 
 ## ValueObject (domain)
 - [x] Email
@@ -22,21 +27,42 @@
 - [x] TenantCode
 - [x] TenantId
 - [x] UserId
+- [x] RefreshTokenId
+- [x] TokenHash
+- [x] RawRefreshToken
+- [x] RawRefreshToken#toString
+- [x] RawPassword#toString
 
 ## Repository (domain)
 - [x] findByTenantCodeAndEmail
+- [x] findById（UserRepository）
+- [x] RefreshTokenRepository#findByTokenHash
+- [x] RefreshTokenRepository#save
 
 ## Port (domain)
 - [x] AccessTokenProvider#issue
 - [x] PasswordVerifier#matches
 - [x] AccessTokenVerifier#verify
+- [x] RefreshTokenGenerator#generate
+- [x] RefreshTokenHasher#hash
+- [x] RefreshTokenExpirationPolicy#expiration
 
 ## infrastructure.mapper
 
 - [x] UserMapper#toDomain(UserJpaEntity)
+- [x] RefreshTokenMapper#toDomain(RefreshTokenJpaEntity)
+- [x] RefreshTokenMapper#toEntity(RefreshToken, TenantJpaEntity, UserJpaEntity)
 
 ## infrastructure.security
 
 - [x] StubAccessTokenProvider を jjwt 実装へ置換
 - [x] PasswordEncoderVerifier
 - [x] StubAccessTokenVerifier を JwtAccessTokenVerifier へ置換
+- [x] StubRefreshTokenGenerator を実装へ置換
+- [x] StubRefreshTokenHasher を実装へ置換
+- [x] StubRefreshTokenExpirationPolicy を実装へ置換
+
+## infrastructure.persistence
+
+- [x] StubRefreshTokenRepository を実装へ置換
+- [x] UserRepositoryImpl#findById を実装
