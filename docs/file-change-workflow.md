@@ -130,6 +130,15 @@ Service の入力は、プリミティブ型を運ぶ入力 DTO（Command クラ
 - **TODO.md に登録しない**: 遅延実装が存在しないため `TODO.md` には登録しない。`TODO.md` に積むのは Service 本体と、その内側スタブ（Repository / DomainObject / ValueObject）のみとする。
 - **プリミティブ型を保持する**: Command は外側と Service の境界を表す DTO のため、プリミティブ型を保持する。プリミティブ → ValueObject の変換は Service の入口で行う（Service 本体でのプリミティブ型の扱いは「ドメインモデルの利用」の項を参照）。
 
+### config（横断的関心事）の扱い
+
+Spring 設定クラス（`@Configuration`）、properties、OpenAPI/Swagger 等のドキュメント化、ロジックを変更しない既存コードへの注釈付与など、DDD の業務レイヤーに属さない横断的作業は種別 `config` として扱う。
+
+- 単一レイヤー原則の例外: config は特定の業務レイヤーに属さないため、主成果物（新規 `@Configuration` 等）に加え、ロジックを変更しない範囲で複数レイヤーの既存ファイルへドキュメント用注釈・設定変更を横断してよい。ロジック変更を伴う場合は通常の業務レイヤー steering として分離する。
+- DDD 契約項目は非該当: スタブ / Command / DomainObject / ValueObject の作成、TODO.md 登録、外側／内側レイヤーとの契約はいずれも発生しない。
+- テスト: `docs/testing-guidelines.md` に従い単体テストは作らず、結合テストで間接検証する。純設定は既存結合テストのコンテキスト起動で回帰担保する。
+- requirements の条件付きセクション（外側／内側レイヤーとの契約・ドメインモデルの利用）は省略せず「該当なし（config のため）」と明記する。
+
 ---
 
 ## requirements.md テンプレート
@@ -146,7 +155,7 @@ Service の入力は、プリミティブ型を運ぶ入力 DTO（Command クラ
 （DDD のうち、今回作業する単一のレイヤーを 1 つだけ。例: application(Service)）
 
 ## 作業対象の種別
-（API / Service / DomainObject / ValueObject / Repository / infrastructure.mapper / infrastructure.security のいずれか 1 つ）
+（API / Service / DomainObject / ValueObject / Repository / infrastructure.mapper / infrastructure.security / config のいずれか 1 つ）
 
 ## 使用するテスト・フレームワーク等
 - テストフレームワーク:（JUnit か Mockito か）
@@ -216,6 +225,7 @@ Service の入力は、プリミティブ型を運ぶ入力 DTO（Command クラ
 | Repository (domain)     |             ✓              |                   ─                    |                            ─                             |
 | infrastructure.mapper   |             ✓              |                   ✓                    |                            ✓                             |
 | infrastructure.security |             ✓              |                   ✓                    |                            ✓                             |
+| config（横断的関心事）           |             ─              |                   ─                    |                            ─                             |
 
 ## TODO.md との関係（補足）
 
