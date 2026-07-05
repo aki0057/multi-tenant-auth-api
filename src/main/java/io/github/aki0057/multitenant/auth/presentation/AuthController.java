@@ -5,6 +5,9 @@ import io.github.aki0057.multitenant.auth.application.LoginCommand;
 import io.github.aki0057.multitenant.auth.application.LoginResult;
 import io.github.aki0057.multitenant.auth.application.RefreshCommand;
 import io.github.aki0057.multitenant.auth.application.RefreshResult;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -52,6 +55,11 @@ public class AuthController {
      *         {@link LoginResponse}（200 OK）。リフレッシュトークンと {@code XSRF-TOKEN}
      *         は {@code Set-Cookie} で返す。
      */
+    @Operation(
+            summary = "ログイン",
+            description = "テナントコード・メールアドレス・パスワードで認証し、成功時に JWT アクセストークンを発行する。"
+                    + "リフレッシュトークンは HttpOnly な Set-Cookie（refreshToken）で返し、あわせて XSRF-TOKEN "
+                    + "クッキーを先行発行する。認証不要（permitAll）のエンドポイント。")
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> login(
             @Valid @RequestBody LoginRequest request,
@@ -86,6 +94,16 @@ public class AuthController {
      *         {@link RefreshResponse}（200 OK）。新しいリフレッシュトークンは
      *         {@code Set-Cookie} で返す。
      */
+    @Operation(
+            summary = "アクセストークンのリフレッシュ",
+            description = "refreshToken クッキーで提示されたリフレッシュトークンを検証し、アクセストークンを再発行する。"
+                    + "リフレッシュトークンはローテーションされ、新しい値を HttpOnly な Set-Cookie（refreshToken）で返す。"
+                    + "この経路は CSRF 保護有効のため、XSRF-TOKEN クッキーの値を X-XSRF-TOKEN ヘッダで送り返す必要がある。"
+                    + "認証不要（permitAll）のエンドポイント。")
+    @Parameter(
+            name = REFRESH_TOKEN_COOKIE,
+            in = ParameterIn.COOKIE,
+            description = "ログイン時に発行されたリフレッシュトークン（refreshToken クッキー）")
     @PostMapping("/refresh")
     public ResponseEntity<RefreshResponse> refresh(
             @CookieValue(REFRESH_TOKEN_COOKIE) String refreshToken) {

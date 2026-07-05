@@ -1,5 +1,7 @@
 package io.github.aki0057.multitenant.auth.presentation;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * リフレッシュ成功時に返却するレスポンス DTO。
  * 再発行された JWT アクセストークンとトークン種別を JSON として返す。
@@ -9,4 +11,8 @@ package io.github.aki0057.multitenant.auth.presentation;
  * @param accessToken 再発行された JWT アクセストークン
  * @param tokenType   トークン種別（{@code "Bearer"} を固定で返す）
  */
-public record RefreshResponse(String accessToken, String tokenType) {}
+public record RefreshResponse(
+        @Schema(description = "再発行された JWT アクセストークン", example = "eyJhbGciOiJIUzI1NiJ9...")
+        String accessToken,
+        @Schema(description = "トークン種別", example = "Bearer")
+        String tokenType) {}
