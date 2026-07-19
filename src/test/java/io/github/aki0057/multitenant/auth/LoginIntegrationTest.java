@@ -59,7 +59,7 @@ class LoginIntegrationTest {
     @Test
     @DisplayName("正常系: 正しい tenantCode + email + password を送信すると 200 OK・アクセストークンが返り、リフレッシュトークンは Cookie で返る")
     void login_withValidCredentials_returns200() throws Exception {
-        mockMvc.perform(post("/login")
+        mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -75,13 +75,13 @@ class LoginIntegrationTest {
                 .andExpect(jsonPath("$.refreshToken").doesNotExist())
                 .andExpect(cookie().exists("refreshToken"))
                 .andExpect(cookie().httpOnly("refreshToken", true))
-                .andExpect(cookie().path("refreshToken", "/refresh"));
+                .andExpect(cookie().path("refreshToken", "/auth/refresh"));
     }
 
     @Test
     @DisplayName("異常系: 形式不正な tenantCode（記号を含む）を送信すると 401 Unauthorized が返る")
     void login_withInvalidFormatCredentials_returns401() throws Exception {
-        mockMvc.perform(post("/login")
+        mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -96,7 +96,7 @@ class LoginIntegrationTest {
     @Test
     @DisplayName("異常系: 壊れた JSON ボディを送信すると 400 Bad Request が返る")
     void login_withMalformedJson_returns400() throws Exception {
-        mockMvc.perform(post("/login")
+        mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -110,7 +110,7 @@ class LoginIntegrationTest {
     @Test
     @DisplayName("異常系: パスワードが一致しない場合は 401 Unauthorized が返る")
     void login_withWrongPassword_returns401() throws Exception {
-        mockMvc.perform(post("/login")
+        mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -125,7 +125,7 @@ class LoginIntegrationTest {
     @Test
     @DisplayName("異常系: 存在しないユーザーの email を送信すると 401 Unauthorized が返る")
     void login_withNonExistentUser_returns401() throws Exception {
-        mockMvc.perform(post("/login")
+        mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -151,7 +151,7 @@ class LoginIntegrationTest {
                 tenantId, "inactive-user@example.com", hash,
                 "USER", false, now, now, "system", "system");
 
-        mockMvc.perform(post("/login")
+        mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -182,7 +182,7 @@ class LoginIntegrationTest {
                 tenantId, "inactive-tenant-user@example.com", hash,
                 "USER", true, now, now, "system", "system");
 
-        mockMvc.perform(post("/login")
+        mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
@@ -197,7 +197,7 @@ class LoginIntegrationTest {
     @Test
     @DisplayName("異常系: 必須項目（password）が欠落している場合は 400 Bad Request が返る")
     void login_withMissingRequiredField_returns400() throws Exception {
-        mockMvc.perform(post("/login")
+        mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {

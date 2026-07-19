@@ -29,7 +29,7 @@ public class SecurityConfig {
      * CSRF トークンの保存先リポジトリ。
      * セッションを持たない（STATELESS）ため、{@code XSRF-TOKEN} クッキー方式
      * （{@link CookieCsrfTokenRepository#withHttpOnlyFalse()}）を用いる。
-     * {@code /refresh} チェーンでの CSRF 検証と、{@code AuthController#login} での
+     * {@code /auth/refresh} チェーンでの CSRF 検証と、{@code AuthController#login} での
      * {@code XSRF-TOKEN} 先行発行の双方で同一インスタンスを共有する。
      *
      * @return {@code XSRF-TOKEN} クッキー方式の CSRF トークンリポジトリ
@@ -40,7 +40,7 @@ public class SecurityConfig {
     }
 
     /**
-     * {@code /refresh} 専用の SecurityFilterChain（高優先）。
+     * {@code /auth/refresh} 専用の SecurityFilterChain（高優先）。
      * リフレッシュトークンのローテーションを保護するため、この経路のみ CSRF を有効化する。
      * クライアントは {@code XSRF-TOKEN} クッキーの値を {@code X-XSRF-TOKEN} ヘッダで
      * 送り返す。Swagger UI が送るのは XOR エンコードされていない生の値のため、
@@ -48,7 +48,7 @@ public class SecurityConfig {
      *
      * @param http                 Spring Security の HTTP 設定ビルダー
      * @param csrfTokenRepository  共有する CSRF トークンリポジトリ
-     * @return {@code /refresh} 用の {@link SecurityFilterChain}
+     * @return {@code /auth/refresh} 用の {@link SecurityFilterChain}
      * @throws Exception 設定構築に失敗した場合
      */
     @Bean
@@ -57,10 +57,10 @@ public class SecurityConfig {
             HttpSecurity http, CsrfTokenRepository csrfTokenRepository) throws Exception {
         CsrfTokenRequestAttributeHandler requestHandler = new CsrfTokenRequestAttributeHandler();
         http
-                // このチェーンは /refresh のみを対象とする
-                .securityMatcher("/refresh")
+                // このチェーンは /auth/refresh のみを対象とする
+                .securityMatcher("/auth/refresh")
 
-                // /refresh のみ CSRF 保護を有効化（XSRF-TOKEN クッキー方式）
+                // /auth/refresh のみ CSRF 保護を有効化（XSRF-TOKEN クッキー方式）
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(csrfTokenRepository)
                         .csrfTokenRequestHandler(requestHandler)
@@ -78,8 +78,8 @@ public class SecurityConfig {
     }
 
     /**
-     * デフォルトの SecurityFilterChain（{@code /refresh} 以外すべて）。
-     * REST API のため CSRF は無効・STATELESS とし、{@code /login} と Swagger 関連の
+     * デフォルトの SecurityFilterChain（{@code /auth/refresh} 以外すべて）。
+     * REST API のため CSRF は無効・STATELESS とし、{@code /auth/login} と Swagger 関連の
      * エンドポイントを認証不要にする。JWT フィルターを挿入し、認証・認可エラーは
      * それぞれ 401・404 の JSON で返す。
      *
@@ -119,7 +119,7 @@ public class SecurityConfig {
 
                 // エンドポイントの認可設定
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login").permitAll()                            // loginは認証不要
+                        .requestMatchers("/auth/login").permitAll()                       // loginは認証不要
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll() // Swaggerは認証不要
                         .anyRequest().authenticated() //規定していないリクエストは全て拒否する
                 )

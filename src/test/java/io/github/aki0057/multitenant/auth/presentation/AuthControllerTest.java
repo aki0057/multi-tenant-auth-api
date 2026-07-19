@@ -63,7 +63,7 @@ class AuthControllerTest {
         when(authService.login(any()))
                 .thenReturn(new LoginResult("mock-access-token", "mock-refresh-token"));
 
-        mockMvc.perform(post("/login")
+        mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(VALID_REQUEST))
                 .andExpect(status().isOk())
@@ -75,17 +75,17 @@ class AuthControllerTest {
                 .andExpect(cookie().value("refreshToken", "mock-refresh-token"))
                 .andExpect(cookie().httpOnly("refreshToken", true))
                 .andExpect(cookie().secure("refreshToken", true))
-                .andExpect(cookie().path("refreshToken", "/refresh"))
+                .andExpect(cookie().path("refreshToken", "/auth/refresh"))
                 .andExpect(cookie().sameSite("refreshToken", "Strict"));
     }
 
     @Test
-    @DisplayName("正常系: login レスポンスの Set-Cookie に XSRF-TOKEN が発行される（後続 /refresh の鶏卵問題回避）。")
+    @DisplayName("正常系: login レスポンスの Set-Cookie に XSRF-TOKEN が発行される（後続 /auth/refresh の鶏卵問題回避）。")
     void login_issuesXsrfTokenCookie() throws Exception {
         when(authService.login(any()))
                 .thenReturn(new LoginResult("mock-access-token", "mock-refresh-token"));
 
-        mockMvc.perform(post("/login")
+        mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(VALID_REQUEST))
                 .andExpect(status().isOk())
@@ -98,7 +98,7 @@ class AuthControllerTest {
         doThrow(new BadCredentialsException("dummy")) // 文字列は何でもよい
                 .when(authService).login(any());
 
-        mockMvc.perform(post("/login")
+        mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(VALID_REQUEST))
                 .andExpect(status().isUnauthorized());
@@ -107,7 +107,7 @@ class AuthControllerTest {
     @Test
     @DisplayName("異常系: リクエストボディのバリデーション失敗時は 400 が返る。")
     void login_invalidRequest() throws Exception {
-        mockMvc.perform(post("/login")
+        mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(INVALID_REQUEST))
                 .andExpect(status().isBadRequest());
@@ -119,7 +119,7 @@ class AuthControllerTest {
         doThrow(new RuntimeException("dummy")) // 文字列は何でもよい
                 .when(authService).login(any());
 
-        mockMvc.perform(post("/login")
+        mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(VALID_REQUEST))
                 .andExpect(status().isInternalServerError());
@@ -131,7 +131,7 @@ class AuthControllerTest {
         when(authService.refresh(any()))
                 .thenReturn(new RefreshResult("new-access-token", "new-refresh-token"));
 
-        mockMvc.perform(post("/refresh")
+        mockMvc.perform(post("/auth/refresh")
                         .cookie(new Cookie("refreshToken", "old-refresh-token"))
                         .with(csrf()))
                 .andExpect(status().isOk())
@@ -143,22 +143,22 @@ class AuthControllerTest {
                 .andExpect(cookie().value("refreshToken", "new-refresh-token"))
                 .andExpect(cookie().httpOnly("refreshToken", true))
                 .andExpect(cookie().secure("refreshToken", true))
-                .andExpect(cookie().path("refreshToken", "/refresh"))
+                .andExpect(cookie().path("refreshToken", "/auth/refresh"))
                 .andExpect(cookie().sameSite("refreshToken", "Strict"));
     }
 
     @Test
     @DisplayName("異常系: refreshToken Cookie 未送付時は 401 が返る（500 にしない）。")
     void refresh_missingCookie() throws Exception {
-        mockMvc.perform(post("/refresh")
+        mockMvc.perform(post("/auth/refresh")
                         .with(csrf()))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
-    @DisplayName("異常系: CSRF トークン（X-XSRF-TOKEN）なしで /refresh へ POST すると 403 が返る。")
+    @DisplayName("異常系: CSRF トークン（X-XSRF-TOKEN）なしで /auth/refresh へ POST すると 403 が返る。")
     void refresh_missingCsrfToken() throws Exception {
-        mockMvc.perform(post("/refresh")
+        mockMvc.perform(post("/auth/refresh")
                         .cookie(new Cookie("refreshToken", "old-refresh-token")))
                 .andExpect(status().isForbidden());
     }

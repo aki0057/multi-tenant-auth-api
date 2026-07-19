@@ -33,7 +33,7 @@ public class AuthController {
 
     /**
      * CSRF トークンの保存先リポジトリ（{@code XSRF-TOKEN} クッキー方式）。
-     * {@code /refresh} チェーンの CSRF 検証と共有し、login レスポンス時点での
+     * {@code /auth/refresh} チェーンの CSRF 検証と共有し、login レスポンス時点での
      * {@code XSRF-TOKEN} 先行発行に用いる。
      */
     private final CsrfTokenRepository csrfTokenRepository;
@@ -42,10 +42,10 @@ public class AuthController {
      * ログインエンドポイント。
      * 認証情報を検証し、成功した場合は JWT アクセストークンを発行するとともに
      * リフレッシュトークンを新規発行して {@code Set-Cookie}
-     * （{@code refreshToken; HttpOnly; Secure; SameSite=Strict; Path=/refresh}）で返す。
+     * （{@code refreshToken; HttpOnly; Secure; SameSite=Strict; Path=/auth/refresh}）で返す。
      * リフレッシュトークンは JSON ボディには含めない。
      * <p>
-     * あわせて、後続の {@code POST /refresh} が CSRF トークンを送信できるよう、
+     * あわせて、後続の {@code POST /auth/refresh} が CSRF トークンを送信できるよう、
      * このレスポンス時点で {@code XSRF-TOKEN} クッキーを発行する（鶏卵問題の回避）。
      *
      * @param request      ログインリクエスト（テナントコード・メールアドレス・パスワード）
@@ -60,7 +60,7 @@ public class AuthController {
             description = "テナントコード・メールアドレス・パスワードで認証し、成功時に JWT アクセストークンを発行する。"
                     + "リフレッシュトークンは HttpOnly な Set-Cookie（refreshToken）で返し、あわせて XSRF-TOKEN "
                     + "クッキーを先行発行する。認証不要（permitAll）のエンドポイント。")
-    @PostMapping("/login")
+    @PostMapping("/auth/login")
     public ResponseEntity<LoginResponse> login(
             @Valid @RequestBody LoginRequest request,
             HttpServletRequest httpRequest,
@@ -72,7 +72,7 @@ public class AuthController {
         ));
 
         // login は CSRF 無効チェーンに属し CSRF フィルターが動かないため、
-        // ここで XSRF-TOKEN クッキーを明示的に発行する（初回 POST /refresh の 403 を回避）。
+        // ここで XSRF-TOKEN クッキーを明示的に発行する（初回 POST /auth/refresh の 403 を回避）。
         CsrfToken csrfToken = csrfTokenRepository.generateToken(httpRequest);
         csrfTokenRepository.saveToken(csrfToken, httpRequest, httpResponse);
 
@@ -86,7 +86,7 @@ public class AuthController {
      * リフレッシュエンドポイント。
      * Cookie で提示されたリフレッシュトークンを検証し、成功した場合はアクセストークンを
      * 再発行するとともに、ローテーション後の新しいリフレッシュトークンを {@code Set-Cookie}
-     * （{@code refreshToken; HttpOnly; Secure; SameSite=Strict; Path=/refresh}）で返す。
+     * （{@code refreshToken; HttpOnly; Secure; SameSite=Strict; Path=/auth/refresh}）で返す。
      * リフレッシュトークンは JSON ボディには含めない。
      *
      * @param refreshToken {@code refreshToken} クッキーで受け取ったリフレッシュトークン
@@ -104,7 +104,7 @@ public class AuthController {
             name = REFRESH_TOKEN_COOKIE,
             in = ParameterIn.COOKIE,
             description = "ログイン時に発行されたリフレッシュトークン（refreshToken クッキー）")
-    @PostMapping("/refresh")
+    @PostMapping("/auth/refresh")
     public ResponseEntity<RefreshResponse> refresh(
             @CookieValue(REFRESH_TOKEN_COOKIE) String refreshToken) {
         RefreshResult result = authService.refresh(new RefreshCommand(refreshToken));
@@ -117,8 +117,8 @@ public class AuthController {
 
     /**
      * リフレッシュトークンを運ぶ {@code Set-Cookie} を構築する。
-     * {@code HttpOnly; Secure; SameSite=Strict; Path=/refresh} を付与し、
-     * JavaScript からの参照と {@code /refresh} 以外への送信を防ぐ。
+     * {@code HttpOnly; Secure; SameSite=Strict; Path=/auth/refresh} を付与し、
+     * JavaScript からの参照と {@code /auth/refresh} 以外への送信を防ぐ。
      *
      * @param rawToken Cookie に載せる生のリフレッシュトークン
      * @return 構築した {@link ResponseCookie}
@@ -128,7 +128,7 @@ public class AuthController {
                 .httpOnly(true)
                 .secure(true)
                 .sameSite("Strict")
-                .path("/refresh")
+                .path("/auth/refresh")
                 .build();
     }
 }
