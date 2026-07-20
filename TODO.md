@@ -6,12 +6,14 @@
 
 - [x] AuthController#login
 - [x] AuthController#refresh
+- [x] AuthController#logout
 - [x] JwtAuthenticationFilter#doFilterInternal
 
 ## Service (application)
 
 - [x] AuthService#login(LoginCommand) の JWT アクセストークン＋リフレッシュトークン発行
 - [x] AuthService#refresh(RefreshCommand)
+- [x] AuthService#logout(LogoutCommand)
 
 ## DomainObject (domain)
 - [x] User#authenticate
