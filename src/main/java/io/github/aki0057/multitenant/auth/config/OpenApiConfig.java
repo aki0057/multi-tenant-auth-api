@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Configuration;
  * Bearer(JWT) の SecurityScheme（{@code bearerAuth}）を 1 件宣言し、
  * Swagger UI に「Authorize」ボタンを表示させる。ただしグローバルな
  * security requirement（{@code addSecurityItem}）は設定しない。現状の
- * 実装済みエンドポイント（{@code POST /auth/login}・{@code POST /auth/refresh}）は
+ * 実装済みエンドポイント（{@code POST /auth/login}・{@code POST /auth/refresh}・{@code POST /auth/logout}）は
  * いずれも {@code permitAll} のため Bearer を要求しない。認証必須エンドポイントが
  * 将来追加された際に、各エンドポイントへ {@code @SecurityRequirement("bearerAuth")}
  * を付与して要求する前提で、ここではスキーム宣言のみを行う。

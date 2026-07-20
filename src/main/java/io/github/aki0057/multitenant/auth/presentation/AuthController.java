@@ -119,11 +119,10 @@ public class AuthController {
     /**
      * ログアウトエンドポイント。
      * {@code refreshToken} クッキーで提示された生リフレッシュトークンを application 層へ渡して
-     * 失効（削除）させ、クライアント側のクッキーを削除するために {@code Set-Cookie}
+     * 失効させ、クライアント側のクッキーを削除するために {@code Set-Cookie}
      * （{@code refreshToken} と {@code XSRF-TOKEN} をいずれも {@code Max-Age=0} で失効）を返す。
      * <p>
-     * クッキー未提示（{@code refreshToken} が {@code null}）・トークン不明・失効済み・期限切れの
-     * いずれの場合も例外を投げず、常に 204 No Content を返す（冪等）。
+     * CSRF トークンを伴うリクエストであれば、 204 No Content を返す。
      *
      * @param refreshToken {@code refreshToken} クッキーで受け取ったリフレッシュトークン（未提示時は {@code null}）
      * @return 本文を持たない 204 No Content。{@code refreshToken} と {@code XSRF-TOKEN} を
@@ -133,7 +132,7 @@ public class AuthController {
             summary = "ログアウト",
             description = "refreshToken クッキーで提示されたリフレッシュトークンを失効させ、"
                     + "refreshToken / XSRF-TOKEN クッキーを Max-Age=0 で削除する。"
-                    + "クッキー未提示・トークン不明・失効済み・期限切れのいずれでも 204 を返す（冪等）。"
+                    + "CSRF トークンを伴うリクエストであれば 204 を返す。"
                     + "認証不要（permitAll）のエンドポイント。")
     @Parameter(
             name = REFRESH_TOKEN_COOKIE,

@@ -78,7 +78,7 @@ public class SecurityConfig {
     }
 
     /**
-     * デフォルトの SecurityFilterChain（{@code /auth/refresh} 以外すべて）。
+     * デフォルトの SecurityFilterChain（{@code /auth/refresh}、{@code /auth/logout} 以外すべて）。
      * REST API のため CSRF は無効・STATELESS とし、{@code /auth/login} と Swagger 関連の
      * エンドポイントを認証不要にする。JWT フィルターを挿入し、認証・認可エラーは
      * それぞれ 401・404 の JSON で返す。
