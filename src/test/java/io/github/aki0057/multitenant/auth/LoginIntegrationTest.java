@@ -75,7 +75,7 @@ class LoginIntegrationTest {
                 .andExpect(jsonPath("$.refreshToken").doesNotExist())
                 .andExpect(cookie().exists("refreshToken"))
                 .andExpect(cookie().httpOnly("refreshToken", true))
-                .andExpect(cookie().path("refreshToken", "/auth/refresh"));
+                .andExpect(cookie().path("refreshToken", "/auth"));
     }
 
     @Test

@@ -40,15 +40,15 @@ public class SecurityConfig {
     }
 
     /**
-     * {@code /auth/refresh} 専用の SecurityFilterChain（高優先）。
-     * リフレッシュトークンのローテーションを保護するため、この経路のみ CSRF を有効化する。
+     * {@code /auth/refresh} と {@code /auth/logout} 専用の SecurityFilterChain（高優先）。
+     * リフレッシュトークンのローテーション・破棄を保護するため、これらの経路のみ CSRF を有効化する。
      * クライアントは {@code XSRF-TOKEN} クッキーの値を {@code X-XSRF-TOKEN} ヘッダで
      * 送り返す。Swagger UI が送るのは XOR エンコードされていない生の値のため、
      * {@link CsrfTokenRequestAttributeHandler}（平文比較）を用いる。
      *
      * @param http                 Spring Security の HTTP 設定ビルダー
      * @param csrfTokenRepository  共有する CSRF トークンリポジトリ
-     * @return {@code /auth/refresh} 用の {@link SecurityFilterChain}
+     * @return {@code /auth/refresh}・{@code /auth/logout} 用の {@link SecurityFilterChain}
      * @throws Exception 設定構築に失敗した場合
      */
     @Bean
@@ -57,10 +57,10 @@ public class SecurityConfig {
             HttpSecurity http, CsrfTokenRepository csrfTokenRepository) throws Exception {
         CsrfTokenRequestAttributeHandler requestHandler = new CsrfTokenRequestAttributeHandler();
         http
-                // このチェーンは /auth/refresh のみを対象とする
-                .securityMatcher("/auth/refresh")
+                // このチェーンは /auth/refresh と /auth/logout を対象とする
+                .securityMatcher("/auth/refresh", "/auth/logout")
 
-                // /auth/refresh のみ CSRF 保護を有効化（XSRF-TOKEN クッキー方式）
+                // /auth/refresh・/auth/logout のみ CSRF 保護を有効化（XSRF-TOKEN クッキー方式）
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(csrfTokenRepository)
                         .csrfTokenRequestHandler(requestHandler)

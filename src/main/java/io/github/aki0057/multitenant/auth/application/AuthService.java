@@ -157,4 +157,18 @@ public class AuthService {
             throw new BadCredentialsException("Invalid refresh token");
         }
     }
+
+    /**
+     * ログアウト処理。
+     * 提示された生リフレッシュトークンをハッシュ化して該当レコードを失効／削除する。
+     * トークン不明・失効済み・期限切れ・{@code null} のいずれの場合も例外を投げず冪等に完了する。
+     *
+     * @param command ログアウトコマンド
+     */
+    // TODO
+    @Transactional
+    public void logout(@NonNull LogoutCommand command) {
+        // TODO
+        throw new UnsupportedOperationException("Not implemented yet");
+    }
 }

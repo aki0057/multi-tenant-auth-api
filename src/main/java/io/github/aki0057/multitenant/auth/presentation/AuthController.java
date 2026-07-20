@@ -3,6 +3,7 @@ package io.github.aki0057.multitenant.auth.presentation;
 import io.github.aki0057.multitenant.auth.application.AuthService;
 import io.github.aki0057.multitenant.auth.application.LoginCommand;
 import io.github.aki0057.multitenant.auth.application.LoginResult;
+import io.github.aki0057.multitenant.auth.application.LogoutCommand;
 import io.github.aki0057.multitenant.auth.application.RefreshCommand;
 import io.github.aki0057.multitenant.auth.application.RefreshResult;
 import io.swagger.v3.oas.annotations.Operation;
@@ -42,7 +43,7 @@ public class AuthController {
      * ログインエンドポイント。
      * 認証情報を検証し、成功した場合は JWT アクセストークンを発行するとともに
      * リフレッシュトークンを新規発行して {@code Set-Cookie}
-     * （{@code refreshToken; HttpOnly; Secure; SameSite=Strict; Path=/auth/refresh}）で返す。
+     * （{@code refreshToken; HttpOnly; Secure; SameSite=Strict; Path=/auth}）で返す。
      * リフレッシュトークンは JSON ボディには含めない。
      * <p>
      * あわせて、後続の {@code POST /auth/refresh} が CSRF トークンを送信できるよう、
@@ -86,7 +87,7 @@ public class AuthController {
      * リフレッシュエンドポイント。
      * Cookie で提示されたリフレッシュトークンを検証し、成功した場合はアクセストークンを
      * 再発行するとともに、ローテーション後の新しいリフレッシュトークンを {@code Set-Cookie}
-     * （{@code refreshToken; HttpOnly; Secure; SameSite=Strict; Path=/auth/refresh}）で返す。
+     * （{@code refreshToken; HttpOnly; Secure; SameSite=Strict; Path=/auth}）で返す。
      * リフレッシュトークンは JSON ボディには含めない。
      *
      * @param refreshToken {@code refreshToken} クッキーで受け取ったリフレッシュトークン
@@ -116,9 +117,48 @@ public class AuthController {
     }
 
     /**
+     * ログアウトエンドポイント。
+     * {@code refreshToken} クッキーで提示された生リフレッシュトークンを application 層へ渡して
+     * 失効（削除）させ、クライアント側のクッキーを削除するために {@code Set-Cookie}
+     * （{@code refreshToken} と {@code XSRF-TOKEN} をいずれも {@code Max-Age=0} で失効）を返す。
+     * <p>
+     * クッキー未提示（{@code refreshToken} が {@code null}）・トークン不明・失効済み・期限切れの
+     * いずれの場合も例外を投げず、常に 204 No Content を返す（冪等）。
+     *
+     * @param refreshToken {@code refreshToken} クッキーで受け取ったリフレッシュトークン（未提示時は {@code null}）
+     * @return 本文を持たない 204 No Content。{@code refreshToken} と {@code XSRF-TOKEN} を
+     *         失効させる {@code Set-Cookie} を付与して返す。
+     */
+    @Operation(
+            summary = "ログアウト",
+            description = "refreshToken クッキーで提示されたリフレッシュトークンを失効させ、"
+                    + "refreshToken / XSRF-TOKEN クッキーを Max-Age=0 で削除する。"
+                    + "クッキー未提示・トークン不明・失効済み・期限切れのいずれでも 204 を返す（冪等）。"
+                    + "認証不要（permitAll）のエンドポイント。")
+    @Parameter(
+            name = REFRESH_TOKEN_COOKIE,
+            in = ParameterIn.COOKIE,
+            description = "ログイン時に発行されたリフレッシュトークン（refreshToken クッキー）")
+    @PostMapping("/auth/logout")
+    public ResponseEntity<Void> logout(
+            @CookieValue(value = REFRESH_TOKEN_COOKIE, required = false) String refreshToken,
+            HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse) {
+        authService.logout(new LogoutCommand(refreshToken));
+
+        // null 保存 = CookieCsrfTokenRepository が発行時と同じ属性（Path=/ 等）で
+        // Max-Age=0 の削除クッキーを書き出す
+        csrfTokenRepository.saveToken(null, httpRequest, httpResponse);
+
+        return ResponseEntity.noContent()
+                .header(HttpHeaders.SET_COOKIE, buildRefreshTokenDeletionCookie().toString())
+                .build();
+    }
+
+    /**
      * リフレッシュトークンを運ぶ {@code Set-Cookie} を構築する。
-     * {@code HttpOnly; Secure; SameSite=Strict; Path=/auth/refresh} を付与し、
-     * JavaScript からの参照と {@code /auth/refresh} 以外への送信を防ぐ。
+     * {@code HttpOnly; Secure; SameSite=Strict; Path=/auth} を付与し、
+     * JavaScript からの参照と {@code /auth} 以外への送信を防ぐ。
      *
      * @param rawToken Cookie に載せる生のリフレッシュトークン
      * @return 構築した {@link ResponseCookie}
@@ -128,7 +168,24 @@ public class AuthController {
                 .httpOnly(true)
                 .secure(true)
                 .sameSite("Strict")
-                .path("/auth/refresh")
+                .path("/auth")
+                .build();
+    }
+
+    /**
+     * {@code refreshToken} クッキーを削除するための {@code Set-Cookie} を構築する。
+     * {@code Max-Age=0} で即時失効させる。属性（{@code HttpOnly; Secure; SameSite=Strict; Path=/auth}）は
+     * 発行時（{@link #buildRefreshTokenCookie(String)}）と一致させ、ブラウザ上での削除を確実にする。
+     *
+     * @return {@code refreshToken} を失効させる {@link ResponseCookie}
+     */
+    private ResponseCookie buildRefreshTokenDeletionCookie() {
+        return ResponseCookie.from(REFRESH_TOKEN_COOKIE, "")
+                .httpOnly(true)
+                .secure(true)
+                .sameSite("Strict")
+                .path("/auth")
+                .maxAge(0)
                 .build();
     }
 }
