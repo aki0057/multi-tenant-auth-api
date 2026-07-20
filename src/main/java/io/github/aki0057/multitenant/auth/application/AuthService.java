@@ -160,15 +160,39 @@ public class AuthService {
 
     /**
      * ログアウト処理。
-     * 提示された生リフレッシュトークンをハッシュ化して該当レコードを失効／削除する。
-     * トークン不明・失効済み・期限切れ・{@code null} のいずれの場合も例外を投げず冪等に完了する。
+     * 提示された生リフレッシュトークンをハッシュ化して該当レコードを検索し、
+     * 見つかった場合は失効方式（{@link RefreshToken#revoke()} → 保存）で失効させる。
+     * 物理削除は行わない。
+     *
+     * <p>本メソッドは<strong>冪等</strong>であり、例外を投げない。
+     * 次のいずれの場合も原因を露出させず {@code void} で正常終了する。</p>
+     * <ul>
+     *   <li>{@code command.refreshToken()} が {@code null} の場合</li>
+     *   <li>生トークンが空白のみ等で {@link RawRefreshToken} の検証に失敗する場合
+     *       （{@link IllegalArgumentException} は握りつぶす）</li>
+     *   <li>ハッシュ値に一致するレコードが存在しない場合</li>
+     * </ul>
+     *
+     * <p>該当レコードが見つかった場合は、失効済み・期限切れであるかを問わず
+     * 無条件に失効させて保存する。所有ユーザー・テナントの有効性チェックは行わない。
+     * 失効対象は {@code tokenHash} で特定した 1 件のみであり、
+     * 全デバイスの一括ログアウトは行わない。</p>
      *
      * @param command ログアウトコマンド
      */
-    // TODO
     @Transactional
     public void logout(@NonNull LogoutCommand command) {
-        // TODO
-        throw new UnsupportedOperationException("Not implemented yet");
+        final RawRefreshToken rawRefreshToken;
+        try {
+            rawRefreshToken = new RawRefreshToken(command.refreshToken());
+        } catch (IllegalArgumentException e) {
+            // null・空白のみ等の形式不正は、冪等契約により握りつぶして正常終了する
+            return;
+        }
+
+        TokenHash tokenHash = refreshTokenHasher.hash(rawRefreshToken);
+        refreshTokenRepository.findByTokenHash(tokenHash)
+                // 見つかった場合は失効済み・期限切れを問わず無条件に失効させて保存する
+                .ifPresent(token -> refreshTokenRepository.save(token.revoke()));
     }
 }

@@ -400,4 +400,116 @@ class AuthServiceTest {
                 .isInstanceOf(BadCredentialsException.class);
         verify(accessTokenProvider, never()).issue(any());
     }
+
+    // ===============================================================
+    // logout
+    // ===============================================================
+
+    private static final LogoutCommand LOGOUT_COMMAND =
+            new LogoutCommand("logout-raw-token");
+
+    private static final RawRefreshToken LOGOUT_RAW_TOKEN =
+            new RawRefreshToken("logout-raw-token");
+    private static final TokenHash LOGOUT_TOKEN_HASH = new TokenHash("d".repeat(64));
+
+    /**
+     * 指定した失効状態・有効期限を持つログアウト対象トークンを生成する。
+     */
+    private RefreshToken logoutTargetToken(boolean revoked, Instant expiresAt) {
+        return new RefreshToken(
+                new RefreshTokenId(20L),
+                new TenantId(1L),
+                new UserId(1L),
+                LOGOUT_TOKEN_HASH,
+                expiresAt,
+                revoked
+        );
+    }
+
+    // ---------------------------------------------------------------
+    // logout 正常系
+    // ---------------------------------------------------------------
+
+    @Test
+    @DisplayName("正常系: 有効なリフレッシュトークンが提示された場合、該当トークンを失効させて保存する。")
+    void logout_success() {
+        when(refreshTokenHasher.hash(LOGOUT_RAW_TOKEN)).thenReturn(LOGOUT_TOKEN_HASH);
+        when(refreshTokenRepository.findByTokenHash(LOGOUT_TOKEN_HASH))
+                .thenReturn(Optional.of(logoutTargetToken(false, FIXED_NOW.plus(Duration.ofDays(1)))));
+
+        authService.logout(LOGOUT_COMMAND);
+
+        ArgumentCaptor<RefreshToken> captor = ArgumentCaptor.forClass(RefreshToken.class);
+        verify(refreshTokenRepository, times(1)).save(captor.capture());
+
+        RefreshToken savedToken = captor.getValue();
+        assertThat(savedToken.id()).isEqualTo(new RefreshTokenId(20L));
+        assertThat(savedToken.tenantId()).isEqualTo(new TenantId(1L));
+        assertThat(savedToken.userId()).isEqualTo(new UserId(1L));
+        assertThat(savedToken.tokenHash()).isEqualTo(LOGOUT_TOKEN_HASH);
+        assertThat(savedToken.expiresAt()).isEqualTo(FIXED_NOW.plus(Duration.ofDays(1)));
+        assertThat(savedToken.revoked()).isTrue();
+    }
+
+    // ---------------------------------------------------------------
+    // logout 異常系
+    // ---------------------------------------------------------------
+
+    @Test
+    @DisplayName("異常系: refreshToken が null の場合、例外を投げず何も保存しない。")
+    void logout_nullRefreshToken() {
+        authService.logout(new LogoutCommand(null));
+
+        verify(refreshTokenRepository, never()).findByTokenHash(any());
+        verify(refreshTokenRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("異常系: refreshToken が形式不正（空白のみ）の場合、例外を投げず何も保存しない。")
+    void logout_blankRefreshTokenFormat() {
+        authService.logout(new LogoutCommand("   "));
+
+        verify(refreshTokenRepository, never()).findByTokenHash(any());
+        verify(refreshTokenRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("異常系: 該当トークンが存在しない場合、例外を投げず何も保存しない。")
+    void logout_tokenNotFound() {
+        when(refreshTokenHasher.hash(LOGOUT_RAW_TOKEN)).thenReturn(LOGOUT_TOKEN_HASH);
+        when(refreshTokenRepository.findByTokenHash(LOGOUT_TOKEN_HASH))
+                .thenReturn(Optional.empty());
+
+        authService.logout(LOGOUT_COMMAND);
+
+        verify(refreshTokenRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("異常系: 該当トークンが失効済みの場合でも、例外を投げず無条件に失効させて保存する。")
+    void logout_alreadyRevokedToken() {
+        when(refreshTokenHasher.hash(LOGOUT_RAW_TOKEN)).thenReturn(LOGOUT_TOKEN_HASH);
+        when(refreshTokenRepository.findByTokenHash(LOGOUT_TOKEN_HASH))
+                .thenReturn(Optional.of(logoutTargetToken(true, FIXED_NOW.plus(Duration.ofDays(1)))));
+
+        authService.logout(LOGOUT_COMMAND);
+
+        ArgumentCaptor<RefreshToken> captor = ArgumentCaptor.forClass(RefreshToken.class);
+        verify(refreshTokenRepository, times(1)).save(captor.capture());
+        assertThat(captor.getValue().revoked()).isTrue();
+    }
+
+    @Test
+    @DisplayName("異常系: 該当トークンが期限切れの場合でも、例外を投げず無条件に失効させて保存する。")
+    void logout_expiredToken() {
+        when(refreshTokenHasher.hash(LOGOUT_RAW_TOKEN)).thenReturn(LOGOUT_TOKEN_HASH);
+        when(refreshTokenRepository.findByTokenHash(LOGOUT_TOKEN_HASH))
+                .thenReturn(Optional.of(logoutTargetToken(false, FIXED_NOW.minus(Duration.ofSeconds(1)))));
+
+        authService.logout(LOGOUT_COMMAND);
+
+        ArgumentCaptor<RefreshToken> captor = ArgumentCaptor.forClass(RefreshToken.class);
+        verify(refreshTokenRepository, times(1)).save(captor.capture());
+        assertThat(captor.getValue().revoked()).isTrue();
+    }
 }
