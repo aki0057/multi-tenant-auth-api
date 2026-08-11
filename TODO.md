@@ -15,7 +15,7 @@
 - [x] AuthService#login(LoginCommand) の JWT アクセストークン＋リフレッシュトークン発行
 - [x] AuthService#refresh(RefreshCommand)
 - [x] AuthService#logout(LogoutCommand)
-- [ ] UserService#getMe(GetMeCommand)
+- [x] UserService#getMe(GetMeCommand)
 
 ## DomainObject (domain)
 - [x] User#authenticate
