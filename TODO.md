@@ -9,6 +9,7 @@
 - [x] AuthController#logout
 - [x] JwtAuthenticationFilter#doFilterInternal
 - [x] UserController#getMe
+- [x] AdminController#listTenantUsers
 
 ## Service (application)
 
@@ -16,6 +17,7 @@
 - [x] AuthService#refresh(RefreshCommand)
 - [x] AuthService#logout(LogoutCommand)
 - [x] UserService#getMe(GetMeCommand)
+- [x] UserService#listTenantUsers(ListTenantUsersCommand)
 
 ## DomainObject (domain)
 - [x] User#authenticate
@@ -40,6 +42,7 @@
 ## Repository (domain)
 - [x] findByTenantCodeAndEmail
 - [x] findById（UserRepository）
+- [x] findByTenantId（UserRepository）
 - [x] RefreshTokenRepository#findByTokenHash
 - [x] RefreshTokenRepository#save
 
@@ -70,3 +73,4 @@
 
 - [x] StubRefreshTokenRepository を実装へ置換
 - [x] UserRepositoryImpl#findById を実装
+- [x] UserRepositoryImpl#findByTenantId を実装

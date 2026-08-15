@@ -1,0 +1,9 @@
+# tasklist
+
+- [x] (条件: 作業対象が TODO.md に存在しない場合) `AdminController#listTenantUsers` を、プロジェクトルートの TODO.md の「API (presentation)」の章に、空のチェックボックスで追記する
+- [x] 作業対象を実装する（`presentation/AdminController#listTenantUsers` と `presentation/TenantUserResponse` record の新規作成、内側の `application/UserService#listTenantUsers` スタブ（既存クラスへメソッド追加・`// TODO` のみ・中身を実装しない）と `application/ListTenantUsersCommand` / `application/TenantUserResult` record の作成。`config/SecurityConfig`・`UserController`・`UserResponse`・`UserService#getMe`・`AuthenticatedUser`・`JwtAuthenticationFilter`・`GlobalExceptionHandler` は変更しない）
+- [x] Javadoc を記載する（`AdminController#listTenantUsers`・`TenantUserResponse`・`ListTenantUsersCommand`・`TenantUserResult`・`UserService#listTenantUsers`。無効ユーザーを含める点が `getMe` と意図的に異なることを Javadoc に明記する）
+- [x] 正常系のテストコードを記載する（`src/test/java/.../presentation/AdminControllerTest.java` を新規作成。`@WebMvcTest(AdminController.class)` + `@Import({SecurityConfig.class, PasswordEncoderConfig.class, GlobalExceptionHandler.class})`、`UserService` と `AccessTokenVerifier` は `@MockitoBean`、認証情報は `authentication(...)` PostProcessor で ADMIN の `AuthenticatedUser` を principal にセット。次を検証する: ①ADMIN で `GET /admin/users` → 200 OK・トップレベルが素の配列・各要素に `id` / `email` / `role` / `isActive` が含まれる ②内側が返した id 昇順の並びがそのまま維持される ③無効ユーザー（`isActive = false`）も一覧に含まれ `isActive` が `false` で返る ④管理者本人も一覧に含まれる ⑤principal の `tenantId` が `ListTenantUsersCommand` として application 層へ渡る（`ArgumentCaptor` + AssertJ） ⑥0 件の場合は 404 ではなく 200 OK + 空配列 `[]`）
+- [x] 異常系のテストコードを記載する（未認証（principal なし）で `GET /admin/users` → 401 Unauthorized・`$.error` が `"Unauthorized"`。※ USER ロールでの 404 は `SecurityConfig` への認可設定追加が前提のため本 steering では検証しない）
+- [x] (条件: 作業対象が ValueObject でも Repository でもない場合) 内側レイヤーに作成したスタブ `UserService#listTenantUsers(ListTenantUsersCommand)` を、TODO.md の「Service (application)」の章に、空のチェックボックスで追記する
+- [x] 今回実装した作業対象に対応する TODO.md のチェックボックス（`AdminController#listTenantUsers`）を埋める（完了にする）

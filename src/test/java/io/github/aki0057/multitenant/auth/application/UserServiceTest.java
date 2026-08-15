@@ -11,6 +11,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,6 +31,8 @@ class UserServiceTest {
     private UserService userService;
 
     private static final GetMeCommand COMMAND = new GetMeCommand(1L, 1L);
+
+    private static final ListTenantUsersCommand LIST_COMMAND = new ListTenantUsersCommand(1L);
 
     private User activeUser;
 
@@ -63,6 +66,30 @@ class UserServiceTest {
                 activeUser.email(),
                 activeUser.passwordHash(),
                 activeUser.role(),
+                userIdIsActive,
+                tenantIdIsActive
+        );
+    }
+
+    /**
+     * テナント ID 1 に所属するユーザーを、一覧検証用に任意の値で生成する。
+     *
+     * @param userId           ユーザーの主キー値
+     * @param email            ユーザーのメールアドレス
+     * @param role             ユーザーのロール
+     * @param userIdIsActive   ユーザー自身の有効性
+     * @param tenantIdIsActive 所属テナントの有効性
+     * @return 生成したユーザー
+     */
+    private User tenantUser(long userId, String email, String role,
+                            boolean userIdIsActive, boolean tenantIdIsActive) {
+        return new User(
+                new UserId(userId),
+                new TenantId(1L),
+                activeUser.tenantCode(),
+                new Email(email),
+                activeUser.passwordHash(),
+                new Role(role),
                 userIdIsActive,
                 tenantIdIsActive
         );
@@ -154,5 +181,112 @@ class UserServiceTest {
                 .doesNotThrowAnyException();
 
         verify(userRepository, never()).findById(any());
+    }
+
+    // ===============================================================
+    // listTenantUsers
+    // ===============================================================
+
+    // ---------------------------------------------------------------
+    // listTenantUsers 正常系
+    // ---------------------------------------------------------------
+
+    @Test
+    @DisplayName("正常系: リポジトリが返したユーザーが、ID 昇順の順序のまま 1:1 で TenantUserResult へ詰め替えられる。")
+    void listTenantUsers_success() {
+        when(userRepository.findByTenantId(new TenantId(1L))).thenReturn(List.of(
+                tenantUser(1L, "admin@example.com", "ADMIN", true, true),
+                tenantUser(2L, "user2@example.com", "USER", true, true),
+                tenantUser(3L, "user3@example.com", "USER", false, true)
+        ));
+
+        List<TenantUserResult> result = userService.listTenantUsers(LIST_COMMAND);
+
+        assertThat(result).hasSize(3);
+        assertThat(result).extracting(TenantUserResult::id)
+                .containsExactly(1L, 2L, 3L);
+        assertThat(result).extracting(TenantUserResult::email)
+                .containsExactly("admin@example.com", "user2@example.com", "user3@example.com");
+        assertThat(result).extracting(TenantUserResult::role)
+                .containsExactly("ADMIN", "USER", "USER");
+        assertThat(result).extracting(TenantUserResult::isActive)
+                .containsExactly(true, true, false);
+    }
+
+    @Test
+    @DisplayName("正常系: コマンドのテナント ID が TenantId に変換されてリポジトリへ渡される。")
+    void listTenantUsers_convertsTenantIdToValueObject() {
+        when(userRepository.findByTenantId(new TenantId(1L))).thenReturn(List.of(activeUser));
+
+        userService.listTenantUsers(LIST_COMMAND);
+
+        verify(userRepository).findByTenantId(new TenantId(1L));
+    }
+
+    @Test
+    @DisplayName("正常系: 無効ユーザーも一覧から除外されず、isActive が false として含まれる。")
+    void listTenantUsers_includesInactiveUser() {
+        when(userRepository.findByTenantId(new TenantId(1L))).thenReturn(List.of(
+                tenantUser(1L, "active@example.com", "USER", true, true),
+                tenantUser(2L, "inactive@example.com", "USER", false, true)
+        ));
+
+        List<TenantUserResult> result = userService.listTenantUsers(LIST_COMMAND);
+
+        assertThat(result).hasSize(2);
+        assertThat(result.get(1).id()).isEqualTo(2L);
+        assertThat(result.get(1).email()).isEqualTo("inactive@example.com");
+        assertThat(result.get(1).isActive()).isFalse();
+    }
+
+    @Test
+    @DisplayName("正常系: 所属テナントが無効なユーザーでも、isActive には users.is_active 単体の値が入る。")
+    void listTenantUsers_inactiveTenantUser() {
+        when(userRepository.findByTenantId(new TenantId(1L))).thenReturn(List.of(
+                tenantUser(1L, "user1@example.com", "USER", true, false),
+                tenantUser(2L, "user2@example.com", "USER", false, false)
+        ));
+
+        List<TenantUserResult> result = userService.listTenantUsers(LIST_COMMAND);
+
+        assertThat(result).hasSize(2);
+        // User#isActive() の AND 結果（false）ではなく userIdIsActive の値が返る
+        assertThat(result.get(0).isActive()).isTrue();
+        assertThat(result.get(1).isActive()).isFalse();
+    }
+
+    @Test
+    @DisplayName("正常系: リポジトリが空リストを返す場合、空リストを返す。")
+    void listTenantUsers_empty() {
+        when(userRepository.findByTenantId(new TenantId(1L))).thenReturn(List.of());
+
+        List<TenantUserResult> result = userService.listTenantUsers(LIST_COMMAND);
+
+        assertThat(result).isNotNull();
+        assertThat(result).isEmpty();
+    }
+
+    // ---------------------------------------------------------------
+    // listTenantUsers 異常系
+    // ---------------------------------------------------------------
+
+    @Test
+    @DisplayName("異常系: コマンドのテナント ID が 0 以下の場合、例外を投げず空リストを返しリポジトリを呼ばない。")
+    void listTenantUsers_invalidTenantId() {
+        assertThatCode(() -> assertThat(
+                userService.listTenantUsers(new ListTenantUsersCommand(0L))).isEmpty())
+                .doesNotThrowAnyException();
+
+        verify(userRepository, never()).findByTenantId(any());
+    }
+
+    @Test
+    @DisplayName("異常系: コマンドのテナント ID が null の場合、例外を投げず空リストを返しリポジトリを呼ばない。")
+    void listTenantUsers_nullTenantId() {
+        assertThatCode(() -> assertThat(
+                userService.listTenantUsers(new ListTenantUsersCommand(null))).isEmpty())
+                .doesNotThrowAnyException();
+
+        verify(userRepository, never()).findByTenantId(any());
     }
 }

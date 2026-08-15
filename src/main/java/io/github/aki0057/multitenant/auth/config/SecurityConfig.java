@@ -121,6 +121,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/login").permitAll()                       // loginは認証不要
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll() // Swaggerは認証不要
+                        .requestMatchers("/admin/**").hasAuthority("ADMIN")               // 管理者向けAPIはADMINのみ
                         .anyRequest().authenticated() //規定していないリクエストは全て拒否する
                 )
 
