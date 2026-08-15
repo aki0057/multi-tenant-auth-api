@@ -1,0 +1,76 @@
+package io.github.aki0057.multitenant.auth.presentation.advice;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestCookieException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.util.Map;
+
+/**
+ * コントローラー全体の例外をハンドリングし、適切な HTTP レスポンスへ変換する。
+ */
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    /**
+     * 認証失敗（ユーザー不在・パスワード不一致）→ 401 Unauthorized
+     */
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<Map<String, String>> handleBadCredentials(BadCredentialsException e) {
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("error", "Invalid credentials"));
+    }
+
+    /**
+     * リフレッシュトークン Cookie の未送付（{@code @CookieValue} の欠落）→ 401 Unauthorized。
+     * Cookie 方式のリフレッシュでトークンが提示されない場合を、500 ではなく認証失敗として扱う。
+     */
+    @ExceptionHandler(MissingRequestCookieException.class)
+    public ResponseEntity<Map<String, String>> handleMissingCookie(MissingRequestCookieException e) {
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("error", "Missing refresh token"));
+    }
+
+    /**
+     * リクエストバリデーション失敗 → 400 Bad Request
+     */
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, String>> handleValidation(MethodArgumentNotValidException e) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", "Validation failed"));
+    }
+
+    /**
+     * 不正・壊れた JSON リクエストボディ（デシリアライズ失敗） → 400 Bad Request
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, String>> handleMessageNotReadable(HttpMessageNotReadableException e) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(Map.of("error", "Malformed JSON request"));
+    }
+
+    /**
+     * 上記以外の予期しない例外 → 500 Internal Server Error
+     */
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Map<String, String>> handleUnexpected(Exception e) {
+        log.error("Unexpected error occurred", e);
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "Internal server error"));
+    }
+}
+

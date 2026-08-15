@@ -1,0 +1,27 @@
+# tasklist
+
+- [x] `domain/model/vo/RefreshTokenId.java`（新規、スタブ VO、`// TODO` 目印）を作成する
+- [x] `domain/model/vo/TokenHash.java`（新規、スタブ VO、`// TODO` 目印）を作成する
+- [x] `domain/model/vo/RawRefreshToken.java`（新規、スタブ VO、`// TODO` 目印）を作成する
+- [x] `domain/model/RefreshToken.java`（新規、スタブ DomainObject、`// TODO` 目印）を作成する
+- [x] `domain/repository/RefreshTokenRepository.java`（新規インターフェース、`findByTokenHash` / `save`）を作成する
+- [x] `domain/service/RefreshTokenGenerator.java`（新規ポート、`generate()`）を作成する
+- [x] `domain/service/RefreshTokenHasher.java`（新規ポート、`hash(RawRefreshToken)`）を作成する
+- [x] `domain/exception/InvalidRefreshTokenException.java`（新規ドメイン例外、完全実装）を作成する
+- [x] `domain/repository/UserRepository.java` に `findById(UserId userId)` を追加する
+- [x] `infrastructure/persistence/repository/UserRepositoryImpl.java` に `findById` のスタブ実装（`UnsupportedOperationException`、`// TODO` 目印）を追加する（既存インターフェース変更に伴うコンパイル対応）
+- [x] `infrastructure/security/StubRefreshTokenGenerator.java`（`@Component`、`UnsupportedOperationException` スタブ実装）を作成する
+- [x] `infrastructure/security/StubRefreshTokenHasher.java`（`@Component`、`UnsupportedOperationException` スタブ実装）を作成する
+- [x] `infrastructure/persistence/repository/StubRefreshTokenRepository.java`（`@Repository`、`UnsupportedOperationException` スタブ実装）を作成する
+- [x] `config/ClockConfig.java`（新規、`@Bean public Clock clock()`）を作成する
+- [x] `application/AuthService.java` の `refresh(RefreshCommand)` を実装する（フィールド追加・ロジック実装。シグネチャ・`AuthController` からの呼び出し方は変更しない）
+- [x] Javadoc を記載する（`AuthService#refresh` 本体、および新規作成した domain クラス・インターフェース・例外に付与する）
+- [x] 正常系のテストコードを記載する（`AuthServiceTest` にトークンローテーション成功ケースを追加し、`RefreshResult` の内容・旧トークンの失効保存・新トークンの保存を検証する）
+- [x] 異常系のテストコードを記載する（`AuthServiceTest` に「トークン不存在」「失効済み」「期限切れ」「ユーザー不存在」「ユーザー無効」「テナント無効」の各ケースを追加し、`BadCredentialsException` がスローされ `accessTokenProvider.issue` が呼ばれないことを検証する）
+- [x] `TODO.md` の `## DomainObject (domain)` 章に `RefreshToken` を空のチェックボックスで追記する
+- [x] `TODO.md` の `## ValueObject (domain)` 章に `RefreshTokenId` / `TokenHash` / `RawRefreshToken` を空のチェックボックスで追記する
+- [x] `TODO.md` の `## Repository (domain)` 章に `findById`（UserRepository）/ `RefreshTokenRepository#findByTokenHash` / `RefreshTokenRepository#save` を空のチェックボックスで追記する
+- [x] `TODO.md` の `## Port (domain)` 章に `RefreshTokenGenerator#generate` / `RefreshTokenHasher#hash` を空のチェックボックスで追記する
+- [x] `TODO.md` の `## infrastructure.security` 章に `StubRefreshTokenGenerator を実装へ置換` / `StubRefreshTokenHasher を実装へ置換` を空のチェックボックスで追記する
+- [x] `TODO.md` に `## infrastructure.persistence` 章が存在しない場合は新設し、`StubRefreshTokenRepository を実装へ置換` / `UserRepositoryImpl#findById を実装` を空のチェックボックスで追記する
+- [x] 今回実装した作業対象に対応する `TODO.md` の `Service (application)` 章の `- [ ] AuthService#refresh(RefreshCommand)` チェックボックスを埋める（`[x]` にする）

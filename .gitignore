@@ -5,6 +5,9 @@ target/
 !**/src/test/**/target/
 postgres_data/
 
+### Claude Code ###
+.claude/settings.local.json
+
 ### STS ###
 .apt_generated
 .classpath
@@ -37,4 +40,9 @@ build/
 .env
 .env.*
 !.env.example
+
+### Local HTTPS keystore（自己署名・コミット禁止） ###
+*.p12
+*.jks
+keystore.*
 
