@@ -9,6 +9,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -83,9 +84,66 @@ class UserJpaRepositoryTest {
         assertThat(result.get().getEmail()).isEqualTo("test@example.com");
     }
 
+    @Test
+    @DisplayName("正常系: tenant.id が一致するユーザーが ID 昇順で返り、他テナントのユーザーは含まれない")
+    void findByTenant_IdOrderByIdAsc_found() {
+        // 永続化順（= ID 昇順）とメールアドレスの辞書順が一致しないデータを投入する
+        TenantJpaEntity tenantA = em.persist(buildTenant("tenant-a"));
+        TenantJpaEntity tenantB = em.persist(buildTenant("tenant-b"));
+        em.persist(buildUser(tenantA, "zulu@example.com"));
+        em.persist(buildUser(tenantA, "alpha@example.com"));
+        em.persist(buildUser(tenantB, "other@example.com"));
+        em.flush();
+        em.clear();
+
+        List<UserJpaEntity> result =
+                userJpaRepository.findByTenant_IdOrderByIdAsc(tenantA.getId());
+
+        assertThat(result).hasSize(2);
+        assertThat(result).extracting(UserJpaEntity::getId).isSorted();
+        assertThat(result).extracting(UserJpaEntity::getEmail)
+                .containsExactly("zulu@example.com", "alpha@example.com");
+        // 他テナントのユーザーは含まれない
+        assertThat(result).allMatch(user -> user.getTenant().getId().equals(tenantA.getId()));
+    }
+
+    @Test
+    @DisplayName("正常系: is_active = false のユーザーも除外されずに返る")
+    void findByTenant_IdOrderByIdAsc_includesInactiveUser() {
+        TenantJpaEntity tenant = em.persist(buildTenant("tenant-a"));
+        em.persist(buildUser(tenant, "active@example.com", true));
+        em.persist(buildUser(tenant, "inactive@example.com", false));
+        em.flush();
+        em.clear();
+
+        List<UserJpaEntity> result =
+                userJpaRepository.findByTenant_IdOrderByIdAsc(tenant.getId());
+
+        // クエリに is_active の絞り込みは入っていない
+        assertThat(result).hasSize(2);
+        assertThat(result).extracting(UserJpaEntity::getEmail)
+                .containsExactly("active@example.com", "inactive@example.com");
+        assertThat(result.get(1).isActive()).isFalse();
+    }
+
     // ---------------------------------------------------------------
     // 異常系
     // ---------------------------------------------------------------
+
+    @Test
+    @DisplayName("異常系: 該当ユーザーが存在しないテナント ID の場合は空リストが返る")
+    void findByTenant_IdOrderByIdAsc_notFound() {
+        TenantJpaEntity tenant = em.persist(buildTenant("tenant-a"));
+        em.persist(buildUser(tenant, "test@example.com"));
+        em.flush();
+        em.clear();
+
+        // 存在しないテナント ID で検索
+        List<UserJpaEntity> result =
+                userJpaRepository.findByTenant_IdOrderByIdAsc(Long.MAX_VALUE);
+
+        assertThat(result).isNotNull().isEmpty();
+    }
 
     @Test
     @DisplayName("異常系: 存在しない主キーの場合は empty が返る")
@@ -150,6 +208,28 @@ class UserJpaRepositoryTest {
                 .passwordHash("hashed-password") // パスワード検証は当該テストクラスでは行わない。
                 .role("ROLE_USER")
                 .active(true)
+                .createdAt(OffsetDateTime.now())
+                .updatedAt(OffsetDateTime.now())
+                .createdBy("system")
+                .updatedBy("system")
+                .build();
+    }
+
+    /**
+     * 有効フラグを指定してユーザーの JPA エンティティを組み立てる。
+     *
+     * @param tenant 所属テナント
+     * @param email  メールアドレス
+     * @param active 有効フラグ（{@code users.is_active}）
+     * @return 未永続化の UserJpaEntity
+     */
+    private UserJpaEntity buildUser(TenantJpaEntity tenant, String email, boolean active) {
+        return UserJpaEntity.builder()
+                .tenant(tenant)
+                .email(email)
+                .passwordHash("hashed-password") // パスワード検証は当該テストクラスでは行わない。
+                .role("ROLE_USER")
+                .active(active)
                 .createdAt(OffsetDateTime.now())
                 .updatedAt(OffsetDateTime.now())
                 .createdBy("system")

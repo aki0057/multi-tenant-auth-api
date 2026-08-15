@@ -45,15 +45,27 @@ public class UserRepositoryImpl implements UserRepository {
 
     /**
      * 指定されたテナントに所属するユーザーを ID 昇順で検索する。
-     * 現時点では未実装のスタブであり、常に空リストを返す。
+     * UserJpaRepository#findByTenant_IdOrderByIdAsc に委譲し、UserMapper で 1 件ずつ
+     * ドメインモデルへ変換して返す。
+     *
+     * <p>ID 昇順は SQL の {@code ORDER BY id ASC} で保証されるため、Java 側では並び替えず
+     * 取得順をそのまま維持する。</p>
+     *
+     * <p>{@code is_active} による絞り込みは行わないため、無効ユーザー・無効テナントの
+     * ユーザーも除外しない。有効・無効の判定は呼び出し元の責務とする。</p>
+     *
+     * <p>委譲先の {@code @EntityGraph(attributePaths = "tenant")} により tenant を
+     * JOIN FETCH するため、UserMapper が参照する tenant のフィールドで N+1 は発生しない。</p>
      *
      * @param tenantId 検索対象テナントの主キー
      * @return 該当テナントに所属するユーザーを ID 昇順で並べたリスト（存在しない場合は空リスト）
      */
     @Override
     public List<User> findByTenantId(TenantId tenantId) {
-        // TODO
-        return List.of();
+        return userJpaRepository.findByTenant_IdOrderByIdAsc(tenantId.value())
+                .stream()
+                .map(userMapper::toDomain)
+                .toList();
     }
 }
 

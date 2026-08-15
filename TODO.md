@@ -42,7 +42,7 @@
 ## Repository (domain)
 - [x] findByTenantCodeAndEmail
 - [x] findById（UserRepository）
-- [ ] findByTenantId（UserRepository）
+- [x] findByTenantId（UserRepository）
 - [x] RefreshTokenRepository#findByTokenHash
 - [x] RefreshTokenRepository#save
 
@@ -73,4 +73,4 @@
 
 - [x] StubRefreshTokenRepository を実装へ置換
 - [x] UserRepositoryImpl#findById を実装
-- [ ] UserRepositoryImpl#findByTenantId を実装
+- [x] UserRepositoryImpl#findByTenantId を実装
