@@ -17,7 +17,7 @@
 - [x] AuthService#refresh(RefreshCommand)
 - [x] AuthService#logout(LogoutCommand)
 - [x] UserService#getMe(GetMeCommand)
-- [ ] UserService#listTenantUsers(ListTenantUsersCommand)
+- [x] UserService#listTenantUsers(ListTenantUsersCommand)
 
 ## DomainObject (domain)
 - [x] User#authenticate
@@ -42,6 +42,7 @@
 ## Repository (domain)
 - [x] findByTenantCodeAndEmail
 - [x] findById（UserRepository）
+- [ ] findByTenantId（UserRepository）
 - [x] RefreshTokenRepository#findByTokenHash
 - [x] RefreshTokenRepository#save
 
@@ -72,3 +73,4 @@
 
 - [x] StubRefreshTokenRepository を実装へ置換
 - [x] UserRepositoryImpl#findById を実装
+- [ ] UserRepositoryImpl#findByTenantId を実装

@@ -78,9 +78,26 @@ public class UserService {
      * {@link #getMe(GetMeCommand)} とは意図的に方針が異なる。
      * 有効・無効の状態は {@link TenantUserResult#isActive()} で呼び出し元へ伝える。</p>
      *
+     * <p><strong>テナントの有効性は判定しない。</strong>
+     * {@link TenantUserResult#isActive()} へ詰めるのは {@code users.is_active} 単体
+     * （{@link User#userIdIsActive()}）であり、所属テナントの有効性を含む
+     * {@link User#isActive()} ではない。無効ユーザー・無効テナントのいずれによっても
+     * 一覧からの除外は行わない。</p>
+     *
+     * <p><strong>テナント越えアクセスの防止は
+     * {@link UserRepository#findByTenantId(TenantId)} のクエリ条件（テナント ID の一致）で
+     * 担保する。</strong>application 層でテナント一致を判定する
+     * {@link #getMe(GetMeCommand)} とはこの点でも方針が異なる。</p>
+     *
      * <p>該当ユーザーが 1 件も存在しない場合は例外をスローせず空リストを返す。
      * 呼び出し元（presentation）はこれを 200 OK + 空配列へ変換する。
-     * 並び順は ID 昇順とし、並び替えの責務は本メソッド以降（内側）が持つ。</p>
+     * 並び順（ID 昇順）を保証する責務は
+     * {@link UserRepository#findByTenantId(TenantId)} にあり、
+     * 本メソッドは並び替えを行わずリポジトリが返した順序をそのまま維持する。</p>
+     *
+     * <p>テナント ID が Value Object の検証に失敗する場合
+     * （{@link IllegalArgumentException} は握りつぶす。認証フィルタ通過後のため
+     * 通常は発生しないが、防御的に扱う）も、例外をスローせず空リストを返す。</p>
      *
      * @param command 同一テナントのユーザー一覧取得コマンド
      * @return テナントに所属するユーザーを ID 昇順で並べた {@link TenantUserResult} のリスト。
@@ -88,7 +105,21 @@ public class UserService {
      */
     @Transactional(readOnly = true)
     public List<TenantUserResult> listTenantUsers(@NonNull ListTenantUsersCommand command) {
-        // TODO
-        return List.of();
+        final TenantId tenantId;
+        try {
+            tenantId = new TenantId(command.tenantId());
+        } catch (IllegalArgumentException e) {
+            // 認証フィルタ通過後のため通常発生しないが、防御的に空リストへ変換する
+            return List.of();
+        }
+
+        return userRepository.findByTenantId(tenantId).stream()
+                // 除外・並び替えは行わず 1:1 で詰め替える
+                .map(user -> new TenantUserResult(
+                        user.userId().value(),
+                        user.email().value(),
+                        user.role().value(),
+                        user.userIdIsActive()))
+                .toList();
     }
 }

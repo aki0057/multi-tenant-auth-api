@@ -3,12 +3,14 @@ package io.github.aki0057.multitenant.auth.infrastructure.persistence.repository
 import io.github.aki0057.multitenant.auth.domain.model.User;
 import io.github.aki0057.multitenant.auth.domain.model.vo.Email;
 import io.github.aki0057.multitenant.auth.domain.model.vo.TenantCode;
+import io.github.aki0057.multitenant.auth.domain.model.vo.TenantId;
 import io.github.aki0057.multitenant.auth.domain.model.vo.UserId;
 import io.github.aki0057.multitenant.auth.domain.repository.UserRepository;
 import io.github.aki0057.multitenant.auth.infrastructure.persistence.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -39,6 +41,19 @@ public class UserRepositoryImpl implements UserRepository {
     public Optional<User> findById(UserId userId) {
         return userJpaRepository.findById(userId.value())
                 .map(userMapper::toDomain);
+    }
+
+    /**
+     * 指定されたテナントに所属するユーザーを ID 昇順で検索する。
+     * 現時点では未実装のスタブであり、常に空リストを返す。
+     *
+     * @param tenantId 検索対象テナントの主キー
+     * @return 該当テナントに所属するユーザーを ID 昇順で並べたリスト（存在しない場合は空リスト）
+     */
+    @Override
+    public List<User> findByTenantId(TenantId tenantId) {
+        // TODO
+        return List.of();
     }
 }
 
