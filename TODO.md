@@ -9,6 +9,7 @@
 - [x] AuthController#logout
 - [x] JwtAuthenticationFilter#doFilterInternal
 - [x] UserController#getMe
+- [x] AdminController#listTenantUsers
 
 ## Service (application)
 
@@ -16,6 +17,7 @@
 - [x] AuthService#refresh(RefreshCommand)
 - [x] AuthService#logout(LogoutCommand)
 - [x] UserService#getMe(GetMeCommand)
+- [ ] UserService#listTenantUsers(ListTenantUsersCommand)
 
 ## DomainObject (domain)
 - [x] User#authenticate

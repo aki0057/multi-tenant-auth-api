@@ -9,6 +9,7 @@ import org.jspecify.annotations.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -65,5 +66,29 @@ public class UserService {
                 // 無効ユーザー・無効テナントは 404 扱い
                 .filter(User::isActive)
                 .map(user -> new GetMeResult(user.email().value(), user.role().value()));
+    }
+
+    /**
+     * 指定されたテナントに所属するユーザーの一覧を取得する。
+     * 管理者が自テナントのユーザー状態を把握するためのユースケースであり、
+     * 各ユーザーの ID・メールアドレス・ロール・有効状態を返す。
+     *
+     * <p><strong>無効ユーザー（{@code users.is_active = false}）も一覧に含める。</strong>
+     * 無効ユーザー・無効テナントを 404 相当（{@link Optional#empty()}）として扱う
+     * {@link #getMe(GetMeCommand)} とは意図的に方針が異なる。
+     * 有効・無効の状態は {@link TenantUserResult#isActive()} で呼び出し元へ伝える。</p>
+     *
+     * <p>該当ユーザーが 1 件も存在しない場合は例外をスローせず空リストを返す。
+     * 呼び出し元（presentation）はこれを 200 OK + 空配列へ変換する。
+     * 並び順は ID 昇順とし、並び替えの責務は本メソッド以降（内側）が持つ。</p>
+     *
+     * @param command 同一テナントのユーザー一覧取得コマンド
+     * @return テナントに所属するユーザーを ID 昇順で並べた {@link TenantUserResult} のリスト。
+     *         該当ユーザーが存在しない場合は空リスト
+     */
+    @Transactional(readOnly = true)
+    public List<TenantUserResult> listTenantUsers(@NonNull ListTenantUsersCommand command) {
+        // TODO
+        return List.of();
     }
 }
